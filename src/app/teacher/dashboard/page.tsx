@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -11,23 +12,29 @@ export default async function TeacherDashboard() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: teacher } = await supabase
+  if (!user) {
+    redirect("/login");
+  }
+
+  const admin = createAdminClient();
+
+  const { data: teacher } = await admin
     .from("teachers")
     .select("*")
-    .eq("auth_user_id", user!.id)
+    .eq("auth_user_id", user.id)
     .single();
 
   if (!teacher) {
-    redirect("/teacher/setup");
+    redirect("/setup");
   }
 
   // Check if Canvas is configured
   if (!teacher.canvas_base_url || !teacher.canvas_api_token) {
-    redirect("/teacher/setup");
+    redirect("/setup");
   }
 
   // Get teacher's courses
-  const { data: courses } = await supabase
+  const { data: courses } = await admin
     .from("courses")
     .select(
       `
@@ -47,7 +54,7 @@ export default async function TeacherDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
         <div className="flex gap-2">
-          <Link href="/teacher/setup">
+          <Link href="/setup">
             <Button variant="outline" size="sm">
               <Settings className="mr-1 h-4 w-4" />
               Setup
@@ -62,7 +69,7 @@ export default async function TeacherDashboard() {
             <p className="text-muted-foreground">
               No courses synced yet.{" "}
               <Link
-                href="/teacher/setup"
+                href="/setup"
                 className="font-medium text-primary underline"
               >
                 Sync your courses from Canvas

@@ -36,6 +36,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/inngest") ||
+    pathname.startsWith("/test-") ||
+    pathname.startsWith("/api/test-") ||
     pathname === "/"
   ) {
     return supabaseResponse;
@@ -48,8 +50,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Check if user is a teacher
-  if (pathname.startsWith("/teacher")) {
+  // Allow teacher setup for any authenticated user (so they can become a teacher)
+  // Protect other teacher routes to verified teachers only
+  if (pathname.startsWith("/teacher") && !pathname.startsWith("/teacher/setup")) {
     const { data: teacher } = await supabase
       .from("teachers")
       .select("id")

@@ -31,13 +31,4 @@ CREATE POLICY "Students can update own row"
   ON students FOR UPDATE
   USING (auth_user_id = auth.uid());
 
-CREATE POLICY "Teachers can view students in their courses"
-  ON students FOR SELECT
-  USING (
-    id IN (
-      SELECT e.student_id FROM enrollments e
-      JOIN courses c ON e.course_id = c.id
-      JOIN teachers t ON c.teacher_id = t.id
-      WHERE t.auth_user_id = auth.uid()
-    )
-  );
+-- Teacher policy added in 009_cross_table_policies.sql (depends on enrollments table)

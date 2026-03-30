@@ -25,12 +25,4 @@ CREATE POLICY "Teachers can manage own courses"
     )
   );
 
-CREATE POLICY "Students can view enrolled courses"
-  ON courses FOR SELECT
-  USING (
-    id IN (
-      SELECT e.course_id FROM enrollments e
-      JOIN students s ON e.student_id = s.id
-      WHERE s.auth_user_id = auth.uid()
-    )
-  );
+-- Student policy added in 009_cross_table_policies.sql (depends on enrollments table)

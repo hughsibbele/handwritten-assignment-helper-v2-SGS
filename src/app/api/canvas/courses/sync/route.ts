@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CanvasClient } from "@/lib/canvas/client";
+import { z } from "zod";
 
-export async function POST() {
+const bodySchema = z.object({
+  courseIds: z.array(z.number()).min(1),
+});
+
+export async function POST(request: Request) {
   const supabase = await createServerSupabase();
   const {
     data: { user },
@@ -12,7 +18,18 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: teacher } = await supabase
+  const body = await request.json();
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Provide courseIds array" },
+      { status: 400 }
+    );
+  }
+
+  const admin = createAdminClient();
+
+  const { data: teacher } = await admin
     .from("teachers")
     .select("id, canvas_base_url, canvas_api_token")
     .eq("auth_user_id", user.id)
@@ -29,16 +46,18 @@ export async function POST() {
     teacher.canvas_base_url,
     teacher.canvas_api_token
   );
+  const selectedIds = new Set(parsed.data.courseIds);
 
   try {
     const canvasCourses = await canvas.getCourses();
     const synced = [];
 
     for (const cc of canvasCourses) {
-      // Generate a join code
+      if (!selectedIds.has(cc.id)) continue;
+
       const joinCode = `${cc.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8)}-${cc.id}`.toUpperCase();
 
-      const { data: course } = await supabase
+      const { data: course, error: courseError } = await admin
         .from("courses")
         .upsert(
           {
@@ -54,13 +73,16 @@ export async function POST() {
         .select("id")
         .single();
 
-      if (!course) continue;
+      if (courseError || !course) {
+        console.error(`Course upsert failed for "${cc.name}":`, courseError);
+        continue;
+      }
 
-      // Sync assignments for this course
+      // Sync assignments
       const canvasAssignments = await canvas.getAssignments(cc.id);
       for (const ca of canvasAssignments) {
         if (!ca.published) continue;
-        await supabase.from("assignments").upsert(
+        await admin.from("assignments").upsert(
           {
             course_id: course.id,
             canvas_assignment_id: ca.id,
@@ -74,11 +96,10 @@ export async function POST() {
         );
       }
 
-      // Sync students for this course
+      // Sync students
       const canvasStudents = await canvas.getStudents(cc.id);
       for (const cs of canvasStudents) {
-        // Upsert student
-        const { data: student } = await supabase
+        const { data: student } = await admin
           .from("students")
           .upsert(
             {
@@ -91,34 +112,25 @@ export async function POST() {
           .select("id")
           .single();
 
-        if (!student) {
-          // Try to find existing student by canvas_user_id
-          const { data: existing } = await supabase
-            .from("students")
-            .select("id")
-            .eq("canvas_user_id", cs.id)
-            .single();
+        const studentId =
+          student?.id ??
+          (
+            await admin
+              .from("students")
+              .select("id")
+              .eq("canvas_user_id", cs.id)
+              .single()
+          ).data?.id;
 
-          if (existing) {
-            await supabase.from("enrollments").upsert(
-              {
-                course_id: course.id,
-                student_id: existing.id,
-              },
-              { onConflict: "course_id,student_id" }
-            );
-          }
-          continue;
+        if (studentId) {
+          await admin.from("enrollments").upsert(
+            {
+              course_id: course.id,
+              student_id: studentId,
+            },
+            { onConflict: "course_id,student_id" }
+          );
         }
-
-        // Upsert enrollment
-        await supabase.from("enrollments").upsert(
-          {
-            course_id: course.id,
-            student_id: student.id,
-          },
-          { onConflict: "course_id,student_id" }
-        );
       }
 
       synced.push({ id: cc.id, name: cc.name, term: cc.term?.name });

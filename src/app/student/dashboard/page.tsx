@@ -27,6 +27,15 @@ export default async function StudentDashboard() {
               You are not enrolled in any courses yet. Ask your teacher to add
               you to a course.
             </p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Are you a teacher?{" "}
+              <Link
+                href="/setup"
+                className="font-medium text-primary underline"
+              >
+                Set up your account
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </div>
