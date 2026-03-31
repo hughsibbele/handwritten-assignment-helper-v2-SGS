@@ -17,7 +17,7 @@ export async function transcribeImage(
 ): Promise<string> {
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash-preview-05-20",
+    model: "gemini-2.5-flash",
     systemInstruction: TRANSCRIPTION_SYSTEM_INSTRUCTION,
   });
 
