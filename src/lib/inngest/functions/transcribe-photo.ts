@@ -6,7 +6,7 @@ export const transcribePhoto = inngest.createFunction(
   {
     id: "transcribe-photo",
     retries: 3,
-    concurrency: { limit: 15 },
+    concurrency: { limit: 5 },
     triggers: [{ event: "photo.uploaded" }],
   },
   async ({ event, step }: { event: { data: { photoId: string; submissionId: string; storagePath: string } }; step: any }) => {
