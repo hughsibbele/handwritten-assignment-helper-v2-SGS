@@ -81,9 +81,7 @@ export default async function StudentDashboard() {
     )
     .in("course_id", courseIds)
     .eq("is_active", true)
-    .gte("due_date", new Date().toISOString())
-    .order("due_date", { ascending: true })
-    .limit(10);
+    .order("due_date", { ascending: false });
 
   // Get recent submissions
   const { data: submissions } = await supabase
@@ -113,13 +111,13 @@ export default async function StudentDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Clock className="h-5 w-5" />
-              Upcoming Assignments
+              Assignments
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!assignments || assignments.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No upcoming assignments
+                No assignments yet
               </p>
             ) : (
               <ul className="space-y-3">
