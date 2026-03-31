@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { BookOpen, Settings, Users } from "lucide-react";
 import { BackgroundSync } from "@/components/teacher/background-sync";
+import { TeacherGuide } from "@/components/teacher/teacher-guide";
 
 export default async function TeacherDashboard() {
   const supabase = await createServerSupabase();
@@ -59,6 +60,7 @@ export default async function TeacherDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
         <div className="flex gap-2">
+          <TeacherGuide />
           <Link href="/setup">
             <Button variant="outline" size="sm">
               <Settings className="mr-1 h-4 w-4" />
