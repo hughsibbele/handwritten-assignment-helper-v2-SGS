@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { BookOpen, Settings, Users } from "lucide-react";
+import { BackgroundSync } from "@/components/teacher/background-sync";
 
 export default async function TeacherDashboard() {
   const supabase = await createServerSupabase();
@@ -40,6 +41,7 @@ export default async function TeacherDashboard() {
       `
       id,
       name,
+      short_name,
       term,
       is_active,
       enrollments (count),
@@ -49,8 +51,11 @@ export default async function TeacherDashboard() {
     .eq("teacher_id", teacher.id)
     .eq("is_active", true);
 
+  const courseIds = courses?.map((c) => c.id) ?? [];
+
   return (
     <div className="space-y-6">
+      <BackgroundSync courseIds={courseIds} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
         <div className="flex gap-2">
@@ -92,7 +97,14 @@ export default async function TeacherDashboard() {
               <Link key={course.id} href={`/teacher/courses/${course.id}`}>
                 <Card className="transition-colors hover:bg-muted/50">
                   <CardHeader>
-                    <CardTitle className="text-lg">{course.name}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {course.short_name && (
+                        <span className="mr-2 text-muted-foreground">
+                          {course.short_name}
+                        </span>
+                      )}
+                      {course.name}
+                    </CardTitle>
                     {course.term && (
                       <p className="text-sm text-muted-foreground">
                         {course.term}

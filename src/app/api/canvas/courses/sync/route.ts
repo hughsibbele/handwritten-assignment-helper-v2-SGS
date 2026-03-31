@@ -5,7 +5,12 @@ import { CanvasClient } from "@/lib/canvas/client";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  courseIds: z.array(z.number()).min(1),
+  courses: z.array(
+    z.object({
+      id: z.number(),
+      shortName: z.string().min(1),
+    })
+  ).min(1),
 });
 
 export async function POST(request: Request) {
@@ -46,15 +51,18 @@ export async function POST(request: Request) {
     teacher.canvas_base_url,
     teacher.canvas_api_token
   );
-  const selectedIds = new Set(parsed.data.courseIds);
+  const selectedCourses = new Map(
+    parsed.data.courses.map((c) => [c.id, c.shortName])
+  );
 
   try {
     const canvasCourses = await canvas.getCourses();
     const synced = [];
 
     for (const cc of canvasCourses) {
-      if (!selectedIds.has(cc.id)) continue;
+      if (!selectedCourses.has(cc.id)) continue;
 
+      const shortName = selectedCourses.get(cc.id)!;
       const joinCode = `${cc.name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8)}-${cc.id}`.toUpperCase();
 
       const { data: course, error: courseError } = await admin
@@ -64,6 +72,7 @@ export async function POST(request: Request) {
             teacher_id: teacher.id,
             canvas_course_id: cc.id,
             name: cc.name,
+            short_name: shortName,
             term: cc.term?.name ?? null,
             join_code: joinCode,
             last_synced_at: new Date().toISOString(),
@@ -90,6 +99,8 @@ export async function POST(request: Request) {
             description: ca.description ?? null,
             due_date: ca.due_at ?? null,
             points_possible: ca.points_possible ?? null,
+            canvas_submission_types: ca.submission_types ?? null,
+            canvas_discussion_topic_id: ca.discussion_topic?.id ?? null,
             last_synced_at: new Date().toISOString(),
           },
           { onConflict: "course_id,canvas_assignment_id" }

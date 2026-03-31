@@ -13,6 +13,23 @@ export interface CanvasAssignment {
   due_at?: string;
   points_possible?: number;
   published: boolean;
+  submission_types?: string[];
+  discussion_topic?: { id: number };
+  is_quiz_assignment?: boolean;
+}
+
+export interface CanvasSubmissionResponse {
+  id: number;
+  assignment_id: number;
+  user_id: number;
+  submitted_at: string;
+}
+
+export interface CanvasDiscussionEntry {
+  id: number;
+  user_id: number;
+  message: string;
+  created_at: string;
 }
 
 export interface CanvasUser {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -11,20 +12,51 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.session) {
-      // Store the Google provider token for Drive/Docs access
+      const userId = data.session.user.id;
+      const userEmail = data.session.user.email;
       const providerToken = data.session.provider_token;
       const providerRefreshToken = data.session.provider_refresh_token;
 
-      if (providerToken) {
-        // Check if student record exists, create or update it
-        const { data: existingStudent } = await supabase
+      if (providerToken && userEmail) {
+        // Use admin client — RLS can't find students with null auth_user_id
+        const admin = createAdminClient();
+
+        // Try to find student by auth_user_id first, then by email
+        const { data: studentById } = await admin
           .from("students")
           .select("id")
-          .eq("auth_user_id", data.session.user.id)
+          .eq("auth_user_id", userId)
           .single();
 
-        if (existingStudent) {
-          await supabase
+        let studentId = studentById?.id;
+
+        if (!studentId) {
+          // Match by email (Canvas-synced students have email but no auth_user_id)
+          const { data: studentByEmail } = await admin
+            .from("students")
+            .select("id, auth_user_id")
+            .eq("email", userEmail)
+            .single();
+
+          if (studentByEmail) {
+            studentId = studentByEmail.id;
+
+            // Link the auth user to this Canvas student record
+            if (!studentByEmail.auth_user_id) {
+              await admin
+                .from("students")
+                .update({
+                  auth_user_id: userId,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", studentId);
+            }
+          }
+        }
+
+        // Save Google tokens if we found a student record
+        if (studentId) {
+          await admin
             .from("students")
             .update({
               google_access_token: providerToken,
@@ -34,9 +66,8 @@ export async function GET(request: Request) {
               ).toISOString(),
               updated_at: new Date().toISOString(),
             })
-            .eq("id", existingStudent.id);
+            .eq("id", studentId);
         }
-        // Student record will be created during enrollment sync from Canvas
       }
 
       const forwardedHost = request.headers.get("x-forwarded-host");

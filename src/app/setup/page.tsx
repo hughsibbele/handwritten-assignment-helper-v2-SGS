@@ -36,6 +36,10 @@ export default function TeacherSetupPage() {
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<number>>(
     new Set()
   );
+  const [courseShortNames, setCourseShortNames] = useState<
+    Record<number, string>
+  >({});
+  const [showNaming, setShowNaming] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncedCourses, setSyncedCourses] = useState<CanvasCourse[]>([]);
 
@@ -117,13 +121,30 @@ export default function TeacherSetupPage() {
     });
   }
 
+  function handleProceedToNaming() {
+    setShowNaming(true);
+  }
+
   async function handleSyncSelected() {
+    // Validate all selected courses have short names
+    const missing = Array.from(selectedCourseIds).filter(
+      (id) => !courseShortNames[id]?.trim()
+    );
+    if (missing.length > 0) {
+      toast.error("Please enter a display name for every selected course.");
+      return;
+    }
+
     setSyncing(true);
     try {
+      const courses = Array.from(selectedCourseIds).map((id) => ({
+        id,
+        shortName: courseShortNames[id].trim(),
+      }));
       const res = await fetch("/api/canvas/courses/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseIds: Array.from(selectedCourseIds) }),
+        body: JSON.stringify({ courses }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -212,39 +233,86 @@ export default function TeacherSetupPage() {
               </Button>
             )}
 
-            {availableCourses.length > 0 && syncedCourses.length === 0 && (
+            {availableCourses.length > 0 &&
+              syncedCourses.length === 0 &&
+              !showNaming && (
+                <>
+                  <div className="max-h-80 space-y-1 overflow-y-auto rounded-lg border p-2">
+                    {availableCourses.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => toggleCourse(c.id)}
+                        className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/50"
+                      >
+                        {selectedCourseIds.has(c.id) ? (
+                          <CheckSquare className="h-4 w-4 shrink-0 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="flex-1">{c.name}</span>
+                        {c.term && (
+                          <span className="text-xs text-muted-foreground">
+                            {c.term}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={handleProceedToNaming}
+                    disabled={selectedCourseIds.size === 0}
+                  >
+                    Next: Name Courses
+                  </Button>
+                </>
+              )}
+
+            {showNaming && syncedCourses.length === 0 && (
               <>
-                <div className="max-h-80 space-y-1 overflow-y-auto rounded-lg border p-2">
-                  {availableCourses.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => toggleCourse(c.id)}
-                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/50"
-                    >
-                      {selectedCourseIds.has(c.id) ? (
-                        <CheckSquare className="h-4 w-4 shrink-0 text-primary" />
-                      ) : (
-                        <Square className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      )}
-                      <span className="flex-1">{c.name}</span>
-                      {c.term && (
-                        <span className="text-xs text-muted-foreground">
-                          {c.term}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                <p className="text-sm text-muted-foreground">
+                  Give each course a short display name. This will be used to
+                  name Google Drive folders for student work (e.g.
+                  &quot;FLC&quot; or &quot;Chekhov&quot;).
+                </p>
+                <div className="space-y-3">
+                  {availableCourses
+                    .filter((c) => selectedCourseIds.has(c.id))
+                    .map((c) => (
+                      <div key={c.id} className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">
+                          {c.name}
+                        </Label>
+                        <Input
+                          placeholder="Short name, e.g. FLC"
+                          value={courseShortNames[c.id] ?? ""}
+                          onChange={(e) =>
+                            setCourseShortNames((prev) => ({
+                              ...prev,
+                              [c.id]: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    ))}
                 </div>
-                <Button
-                  onClick={handleSyncSelected}
-                  disabled={syncing || selectedCourseIds.size === 0}
-                >
-                  {syncing && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Sync {selectedCourseIds.size} Selected Course
-                  {selectedCourseIds.size !== 1 ? "s" : ""}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowNaming(false)}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleSyncSelected}
+                    disabled={syncing}
+                  >
+                    {syncing && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Sync {selectedCourseIds.size} Course
+                    {selectedCourseIds.size !== 1 ? "s" : ""}
+                  </Button>
+                </div>
               </>
             )}
 

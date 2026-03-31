@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -33,20 +33,22 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <BookOpen className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-4">
+            <Image
+              src="/ehs-logo.webp"
+              alt="Episcopal High School"
+              width={280}
+              height={80}
+              priority
+            />
           </div>
-          <CardTitle className="text-2xl">Reading Journal Helper</CardTitle>
+          <CardTitle className="text-2xl">Handwritten Assignment Helper</CardTitle>
           <CardDescription>
             Upload your handwritten work and get it transcribed to a Google Doc
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            onClick={handleGoogleLogin}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleGoogleLogin} className="w-full" size="lg">
             Sign in with Google
           </Button>
           <p className="mt-4 text-center text-sm text-muted-foreground">

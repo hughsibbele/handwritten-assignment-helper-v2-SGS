@@ -36,9 +36,16 @@ export const transcribePhoto = inngest.createFunction(
       }
 
       const buffer = Buffer.from(await data.arrayBuffer());
-      const mimeType = storagePath.endsWith(".png")
-        ? "image/png"
-        : "image/jpeg";
+      const ext = storagePath.split(".").pop()?.toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        png: "image/png",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        webp: "image/webp",
+        heic: "image/heic",
+        heif: "image/heif",
+      };
+      const mimeType = mimeTypes[ext ?? ""] ?? "image/jpeg";
 
       return {
         base64: buffer.toString("base64"),

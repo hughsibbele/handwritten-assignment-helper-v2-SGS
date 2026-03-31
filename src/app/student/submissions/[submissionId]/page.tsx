@@ -14,7 +14,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, FileText, ExternalLink } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  FileText,
+  ExternalLink,
+  AlertTriangle,
+} from "lucide-react";
 
 interface Submission {
   id: string;
@@ -23,6 +29,9 @@ interface Submission {
   gdoc_url: string | null;
   assignment: {
     title: string;
+    canvas_submit_by_default: boolean;
+    canvas_discussion_topic_id: number | null;
+    canvas_submission_types: string[] | null;
     course: { name: string };
   };
 }
@@ -42,6 +51,7 @@ export default function SubmissionPage() {
   const [submission, setSubmission] = useState<Submission | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [editedText, setEditedText] = useState("");
+  const [submitToCanvas, setSubmitToCanvas] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +59,14 @@ export default function SubmissionPage() {
     const { data: sub } = await supabase
       .from("submissions")
       .select(
-        "id, status, transcription_text, gdoc_url, assignment:assignments(title, course:courses(name))"
+        `id, status, transcription_text, gdoc_url,
+         assignment:assignments(
+           title,
+           canvas_submit_by_default,
+           canvas_discussion_topic_id,
+           canvas_submission_types,
+           course:courses(name)
+         )`
       )
       .eq("id", submissionId)
       .single();
@@ -59,6 +76,10 @@ export default function SubmissionPage() {
       setSubmission(s);
       if (s.transcription_text && !editedText) {
         setEditedText(s.transcription_text);
+      }
+      // Set Canvas toggle default from teacher's setting (only on first load)
+      if (!submission) {
+        setSubmitToCanvas(s.assignment?.canvas_submit_by_default ?? false);
       }
     }
 
@@ -73,7 +94,7 @@ export default function SubmissionPage() {
     }
 
     setLoading(false);
-  }, [submissionId, supabase, editedText]);
+  }, [submissionId, supabase, editedText, submission]);
 
   useEffect(() => {
     loadData();
@@ -120,26 +141,39 @@ export default function SubmissionPage() {
       const res = await fetch(`/api/submissions/${submissionId}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcriptionText: editedText }),
+        body: JSON.stringify({
+          transcriptionText: editedText,
+          submitToCanvas,
+        }),
       });
 
       if (!res.ok) throw new Error("Failed to confirm");
 
       const data = await res.json();
-      toast.success("Transcription confirmed and saved!");
+
+      // Show warnings if any
+      if (data.warnings?.length) {
+        for (const w of data.warnings) {
+          toast.warning(w);
+        }
+      }
+
+      const statusMsg = data.canvasSubmitted
+        ? "Confirmed, Google Doc created, and submitted to Canvas!"
+        : "Transcription confirmed and Google Doc created!";
+      toast.success(statusMsg);
+
       setSubmission((prev) =>
         prev
           ? {
               ...prev,
-              status: "confirmed",
+              status: data.canvasSubmitted ? "submitted" : "confirmed",
               gdoc_url: data.gdocUrl ?? prev.gdoc_url,
             }
           : prev
       );
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to confirm"
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to confirm");
     } finally {
       setConfirming(false);
     }
@@ -157,9 +191,24 @@ export default function SubmissionPage() {
     return <p className="text-muted-foreground">Submission not found.</p>;
   }
 
-  const completedPhotos = photos.filter((p) => p.status === "completed").length;
+  const completedPhotos = photos.filter(
+    (p) => p.status === "completed"
+  ).length;
   const isProcessing = submission.status === "processing";
-  const isReady = submission.status === "review" || submission.status === "confirmed";
+  const isReady =
+    submission.status === "review" || submission.status === "confirmed";
+  const isDone =
+    submission.status === "confirmed" || submission.status === "submitted";
+
+  // Determine if Canvas submission is possible for this assignment
+  const isDiscussion = !!submission.assignment?.canvas_discussion_topic_id;
+  const submissionTypes = submission.assignment?.canvas_submission_types ?? [];
+  const canSubmitToCanvas =
+    isDiscussion || submissionTypes.includes("online_text_entry");
+
+  const canvasToggleLabel = isDiscussion
+    ? "Post to Canvas discussion"
+    : "Submit to Canvas assignment";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -208,7 +257,7 @@ export default function SubmissionPage() {
           )}
 
           {/* Review editor */}
-          {isReady && submission.status !== "confirmed" && (
+          {isReady && !isDone && (
             <>
               <p className="text-sm text-muted-foreground">
                 Review and edit the transcription below. Fix any errors, then
@@ -217,9 +266,33 @@ export default function SubmissionPage() {
               <Textarea
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
-                rows={20}
-                className="font-mono text-sm"
+                rows={10}
+                className="min-h-[200px] font-mono text-sm sm:min-h-[400px]"
               />
+
+              {/* Canvas submission toggle */}
+              <label className="flex items-start gap-3 rounded-lg border p-3">
+                <input
+                  type="checkbox"
+                  checked={submitToCanvas && canSubmitToCanvas}
+                  disabled={!canSubmitToCanvas}
+                  onChange={(e) => setSubmitToCanvas(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                />
+                <div className="space-y-1">
+                  <span className="text-sm font-medium">
+                    {canvasToggleLabel}
+                  </span>
+                  {!canSubmitToCanvas && (
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <AlertTriangle className="h-3 w-3" />
+                      This assignment doesn&apos;t accept text submissions on
+                      Canvas
+                    </p>
+                  )}
+                </div>
+              </label>
+
               <Button
                 onClick={handleConfirm}
                 disabled={confirming || !editedText.trim()}
@@ -235,12 +308,16 @@ export default function SubmissionPage() {
             </>
           )}
 
-          {/* Confirmed state */}
-          {submission.status === "confirmed" && (
+          {/* Confirmed / submitted state */}
+          {isDone && (
             <div className="space-y-4">
               <div className="rounded-lg border bg-green-50 p-4 text-center dark:bg-green-950/20">
                 <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-600" />
-                <p className="font-medium">Transcription confirmed!</p>
+                <p className="font-medium">
+                  {submission.status === "submitted"
+                    ? "Submitted to Canvas!"
+                    : "Transcription confirmed!"}
+                </p>
                 {submission.gdoc_url && (
                   <a
                     href={submission.gdoc_url}
@@ -267,7 +344,10 @@ export default function SubmissionPage() {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { variant: "default" | "secondary" | "outline"; label: string }> = {
+  const config: Record<
+    string,
+    { variant: "default" | "secondary" | "outline"; label: string }
+  > = {
     draft: { variant: "secondary", label: "Draft" },
     processing: { variant: "outline", label: "Transcribing..." },
     review: { variant: "default", label: "Ready for Review" },
