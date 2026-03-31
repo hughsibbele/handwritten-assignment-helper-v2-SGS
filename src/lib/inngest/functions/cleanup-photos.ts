@@ -5,20 +5,21 @@ export const cleanupOldPhotos = inngest.createFunction(
   {
     id: "cleanup-old-photos",
     retries: 2,
-    triggers: [{ cron: "0 3 * * *" }], // Daily at 3 AM
+    triggers: [{ cron: "0 3 * * 0" }], // Weekly on Sunday at 3 AM
   },
   async ({ step }) => {
-    // Find photos older than 3 months on confirmed/submitted submissions
+    // Safety net: clean up any orphaned photos older than 1 week
+    // (photos are normally deleted immediately after transcription)
     const photos = await step.run("find-old-photos", async () => {
       const supabase = createAdminClient();
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
       const { data, error } = await supabase
         .from("submission_photos")
         .select("id, storage_path, submission_id, submissions!inner(status)")
         .not("storage_path", "is", null)
-        .lt("created_at", threeMonthsAgo.toISOString())
+        .lt("created_at", oneWeekAgo.toISOString())
         .in("submissions.status", ["confirmed", "submitted"])
         .limit(500);
 

@@ -6,7 +6,7 @@ export const transcribePhoto = inngest.createFunction(
   {
     id: "transcribe-photo",
     retries: 3,
-    concurrency: { limit: 5 },
+    concurrency: { limit: 15 },
     triggers: [{ event: "photo.uploaded" }],
   },
   async ({ event, step }: { event: { data: { photoId: string; submissionId: string; storagePath: string } }; step: any }) => {
@@ -71,7 +71,17 @@ export const transcribePhoto = inngest.createFunction(
         .eq("id", photoId);
     });
 
-    // Step 5: Check if all photos in this submission are done
+    // Step 5: Delete photo from storage (transcription is saved, original no longer needed)
+    await step.run("delete-storage-file", async () => {
+      const supabase = createAdminClient();
+      await supabase.storage.from("submission-photos").remove([storagePath]);
+      await supabase
+        .from("submission_photos")
+        .update({ storage_path: null })
+        .eq("id", photoId);
+    });
+
+    // Step 6: Check if all photos in this submission are done
     await step.run("check-submission-complete", async () => {
       const supabase = createAdminClient();
 

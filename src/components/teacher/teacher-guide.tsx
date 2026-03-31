@@ -106,8 +106,8 @@ export function TeacherGuide() {
                 matches their Canvas email
               </li>
               <li>
-                Photos are stored temporarily and cleaned up after 3 months
-                &mdash; transcriptions and Google Docs are kept
+                Photos are deleted from storage after transcription completes
+                &mdash; transcriptions and Google Docs are kept permanently
               </li>
             </ul>
           </section>
