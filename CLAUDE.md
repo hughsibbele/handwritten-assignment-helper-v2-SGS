@@ -71,10 +71,10 @@ Web app for Episcopal High School students to upload photos of handwritten work,
 - Canvas: connected to `episcopalhighschool.instructure.com`, 2 courses synced (FLC + Chekhov, 2025-2026)
 
 ### What's NOT done yet
-1. **End-to-end test with a real student account** — needs a test Google account within the EHS org. Individual pieces work but haven't been tested as a connected flow.
-2. **Production deployment to Vercel** — env vars need to be configured there
-3. **RLS policy fix** — simplify the cross-table RLS policies to eliminate recursion, removing the need for admin client workaround on every query
-4. **Class code join flow** — deferred; not needed while all students are on Canvas. Could be useful if email matching fails for some students.
+1. **End-to-end test with a real student account** — testing with a live student 2026-03-31
+2. **RLS policy fix** — simplify the cross-table RLS policies to eliminate recursion, removing the need for admin client workaround on every query
+3. **Class code join flow** — deferred; not needed while all students are on Canvas. Could be useful if email matching fails for some students.
+4. **GitHub template repo** — plan to create a GitHub template repository (like user's other template repos) so other schools can self-host their own instance. Would need: generic branding (remove EHS-specific references), a setup guide for Supabase/Google Cloud/Gemini/Inngest/Vercel, and `.env.example` with clear documentation. The app is already multi-tenant per-teacher, so no architecture changes needed — just branding cleanup and documentation.
 
 ### To resume development
 **Remind the user to start the dev server themselves** — it's better for them to run it so they can see the logs. Walk them through it if needed:

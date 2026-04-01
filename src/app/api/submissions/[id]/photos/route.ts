@@ -32,7 +32,38 @@ export async function POST(
 
   const formData = await request.formData();
   const photos: { id: string; storagePath: string }[] = [];
-  let pageNumber = 1;
+
+  // Clean up any old pending/processing photos from previous upload attempts
+  const { data: stalePhotos } = await supabase
+    .from("submission_photos")
+    .select("id, storage_path, status")
+    .eq("submission_id", submissionId)
+    .in("status", ["pending", "processing"]);
+
+  if (stalePhotos && stalePhotos.length > 0) {
+    // Delete storage files for stale photos
+    const pathsToDelete = stalePhotos
+      .map((p) => p.storage_path)
+      .filter(Boolean);
+    if (pathsToDelete.length > 0) {
+      await supabase.storage.from("submission-photos").remove(pathsToDelete);
+    }
+    // Delete DB records
+    await supabase
+      .from("submission_photos")
+      .delete()
+      .in("id", stalePhotos.map((p) => p.id));
+  }
+
+  // Start page numbering after any remaining (completed) photos
+  const { data: existingPhotos } = await supabase
+    .from("submission_photos")
+    .select("page_number")
+    .eq("submission_id", submissionId)
+    .order("page_number", { ascending: false })
+    .limit(1);
+
+  let pageNumber = (existingPhotos?.[0]?.page_number ?? 0) + 1;
 
   for (const [, value] of formData.entries()) {
     if (!(value instanceof File)) continue;

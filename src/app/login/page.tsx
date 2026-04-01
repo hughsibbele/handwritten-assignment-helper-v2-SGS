@@ -23,7 +23,6 @@ export default function LoginPage() {
           "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents",
         queryParams: {
           access_type: "offline",
-          prompt: "consent",
         },
       },
     });
