@@ -102,9 +102,12 @@ export function PhotoDropzone({
     e.target.value = "";
   }
 
-  function handleUpload() {
+  async function handleUpload() {
     if (previews.length === 0) return;
-    onFilesSelected(previews.map((p) => p.file));
+    const compressed = await Promise.all(
+      previews.map((p) => compressImage(p.file))
+    );
+    onFilesSelected(compressed);
   }
 
   return (
@@ -198,6 +201,84 @@ export function PhotoDropzone({
       )}
     </div>
   );
+}
+
+const MAX_DIMENSION = 1600;
+const JPEG_QUALITY = 0.8;
+const HEIC_TYPES = ["image/heic", "image/heif"];
+
+/** Convert HEIC/HEIF to JPEG blob using heic2any (needed for Chrome). */
+async function heicToJpeg(file: File): Promise<Blob> {
+  const heic2any = (await import("heic2any")).default;
+  const result = await heic2any({ blob: file, toType: "image/jpeg", quality: JPEG_QUALITY });
+  return Array.isArray(result) ? result[0] : result;
+}
+
+/**
+ * Compress an image file: convert HEIC→JPEG if needed, then resize via Canvas API.
+ * Resizes to MAX_DIMENSION on the longest side and re-encodes as JPEG.
+ */
+async function compressImage(file: File): Promise<File> {
+  let source: Blob = file;
+
+  // Convert HEIC/HEIF to JPEG first (needed on Chrome/Firefox)
+  const isHeic =
+    HEIC_TYPES.includes(file.type) ||
+    /\.heic$/i.test(file.name) ||
+    /\.heif$/i.test(file.name);
+
+  if (isHeic) {
+    try {
+      source = await heicToJpeg(file);
+    } catch {
+      // Safari can decode HEIC natively — fall through to canvas path
+    }
+  }
+
+  // If already small enough after any HEIC conversion, skip resize
+  if (source.size <= 1024 * 1024) {
+    if (source === file) return file;
+    const name = file.name.replace(/\.[^.]+$/, ".jpg");
+    return new File([source], name, { type: "image/jpeg" });
+  }
+
+  try {
+    const bitmap = await createImageBitmap(source);
+    const { width, height } = bitmap;
+
+    // Calculate new dimensions preserving aspect ratio
+    let newWidth = width;
+    let newHeight = height;
+    if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+      if (width > height) {
+        newWidth = MAX_DIMENSION;
+        newHeight = Math.round(height * (MAX_DIMENSION / width));
+      } else {
+        newHeight = MAX_DIMENSION;
+        newWidth = Math.round(width * (MAX_DIMENSION / height));
+      }
+    }
+
+    const canvas = new OffscreenCanvas(newWidth, newHeight);
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(bitmap, 0, 0, newWidth, newHeight);
+    bitmap.close();
+
+    const blob = await canvas.convertToBlob({
+      type: "image/jpeg",
+      quality: JPEG_QUALITY,
+    });
+
+    const name = file.name.replace(/\.[^.]+$/, ".jpg");
+    return new File([blob], name, { type: "image/jpeg" });
+  } catch {
+    // Last resort — return whatever we have
+    if (source !== file) {
+      const name = file.name.replace(/\.[^.]+$/, ".jpg");
+      return new File([source], name, { type: "image/jpeg" });
+    }
+    return file;
+  }
 }
 
 function SortablePhoto({
