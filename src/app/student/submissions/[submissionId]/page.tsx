@@ -399,6 +399,15 @@ export default function SubmissionPage() {
     };
   }, [submissionId, supabase, loadData]);
 
+  // Polling fallback while processing — realtime can miss events due to race conditions
+  useEffect(() => {
+    if (submission?.status !== "processing") return;
+    const interval = setInterval(() => {
+      loadData();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [submission?.status, loadData]);
+
   async function handleConfirm() {
     setConfirming(true);
     try {
