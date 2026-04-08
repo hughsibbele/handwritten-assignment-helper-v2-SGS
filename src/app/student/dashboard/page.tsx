@@ -89,13 +89,14 @@ export default async function StudentDashboard() {
         .order("due_date", { ascending: false })
     : { data: [] };
 
-  // Get recent submissions
-  const { data: submissions } = await supabase
+  // Get all submissions for this student (used for assignment badges + recent list)
+  const { data: allSubmissions } = await supabase
     .from("submissions")
     .select(
       `
       id,
       status,
+      assignment_id,
       created_at,
       assignment:assignments (
         title,
@@ -104,8 +105,23 @@ export default async function StudentDashboard() {
     `
     )
     .eq("student_id", student.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+    .order("created_at", { ascending: false });
+
+  // Build lookup map for assignment badges
+  const submissionByAssignment = new Map<
+    string,
+    { id: string; status: string }
+  >();
+  for (const s of allSubmissions ?? []) {
+    if (s.assignment_id && !submissionByAssignment.has(s.assignment_id)) {
+      submissionByAssignment.set(s.assignment_id, {
+        id: s.id,
+        status: s.status,
+      });
+    }
+  }
+
+  const submissions = (allSubmissions ?? []).slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -132,26 +148,70 @@ export default async function StudentDashboard() {
                     id: string;
                     name: string;
                   } | null;
+                  const sub = submissionByAssignment.get(a.id);
+                  const inProgress =
+                    sub &&
+                    ["draft", "processing", "review"].includes(sub.status);
+                  const isDone =
+                    sub &&
+                    ["confirmed", "submitted"].includes(sub.status);
+
+                  // Primary link: upload page for new/draft, review page for in-progress/done
+                  const primaryHref =
+                    inProgress && sub.status !== "draft"
+                      ? `/student/submissions/${sub.id}`
+                      : isDone
+                        ? `/student/submissions/${sub.id}`
+                        : `/student/courses/${course?.id}/assignments/${a.id}`;
+
                   return (
                     <li key={a.id}>
-                      <Link
-                        href={`/student/courses/${course?.id}/assignments/${a.id}`}
-                        className="block rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                      >
-                        <p className="font-medium">{a.title}</p>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{course?.name}</span>
-                          {a.due_date && (
-                            <>
-                              <span>&middot;</span>
-                              <span>
-                                Due{" "}
-                                {new Date(a.due_date).toLocaleDateString()}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </Link>
+                      <div className="rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                        <Link href={primaryHref} className="block">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-medium">{a.title}</p>
+                            {inProgress && (
+                              <Badge variant="outline">In Progress</Badge>
+                            )}
+                            {isDone && (
+                              <Badge variant="default">Submitted</Badge>
+                            )}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>{course?.name}</span>
+                            {a.due_date && (
+                              <>
+                                <span>&middot;</span>
+                                <span>
+                                  Due{" "}
+                                  {new Date(a.due_date).toLocaleDateString()}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </Link>
+                        {/* Action links */}
+                        {inProgress && sub.status !== "draft" && (
+                          <div className="mt-2">
+                            <Link
+                              href={`/student/submissions/${sub.id}`}
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
+                              Continue Working
+                            </Link>
+                          </div>
+                        )}
+                        {isDone && (
+                          <div className="mt-2">
+                            <Link
+                              href={`/student/courses/${course?.id}/assignments/${a.id}?resubmit=true`}
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
+                              Resubmit
+                            </Link>
+                          </div>
+                        )}
+                      </div>
                     </li>
                   );
                 })}

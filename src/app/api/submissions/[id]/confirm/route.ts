@@ -51,6 +51,7 @@ export async function POST(
       id,
       student_id,
       assignment_id,
+      attempt_number,
       students!inner ( auth_user_id, display_name, canvas_user_id ),
       assignments!inner (
         title,
@@ -162,7 +163,9 @@ export async function POST(
     );
 
     const dateStr = new Date().toISOString().slice(0, 10);
-    const docTitle = `${assignment.title} - ${student.display_name} (${dateStr})`;
+    const attemptNumber = (submission as unknown as { attempt_number: number }).attempt_number ?? 1;
+    const attemptSuffix = attemptNumber > 1 ? ` (Resubmission ${attemptNumber})` : "";
+    const docTitle = `${assignment.title} - ${student.display_name}${attemptSuffix} (${dateStr})`;
     const { docId, docUrl } = await createGoogleDoc(
       googleClient,
       docTitle,

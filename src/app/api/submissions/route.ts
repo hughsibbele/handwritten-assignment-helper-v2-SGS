@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   // Check for existing submission
   const { data: existing } = await supabase
     .from("submissions")
-    .select("id, status")
+    .select("id, status, attempt_number")
     .eq("assignment_id", parsed.data.assignmentId)
     .eq("student_id", student.id)
     .single();

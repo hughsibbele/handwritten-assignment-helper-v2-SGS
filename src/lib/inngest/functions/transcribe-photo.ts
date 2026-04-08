@@ -14,8 +14,14 @@ export const transcribePhoto = inngest.createFunction(
     const { photoId, submissionId, storagePath } = event.data;
 
     // Step 1: Mark as processing
-    await step.run("mark-processing", async () => {
+    const photoExists = await step.run("mark-processing", async () => {
       const supabase = createAdminClient();
+      const { data: photo } = await supabase
+        .from("submission_photos")
+        .select("id")
+        .eq("id", photoId)
+        .single();
+      if (!photo) return false;
       await supabase
         .from("submission_photos")
         .update({
@@ -23,7 +29,10 @@ export const transcribePhoto = inngest.createFunction(
           processing_started_at: new Date().toISOString(),
         })
         .eq("id", photoId);
+      return true;
     });
+
+    if (!photoExists) return { success: false, photoId, reason: "photo deleted" };
 
     // Step 2: Download image from Supabase Storage
     const imageData = await step.run("download-image", async () => {
@@ -60,8 +69,14 @@ export const transcribePhoto = inngest.createFunction(
     });
 
     // Step 4: Save transcription
-    await step.run("save-transcription", async () => {
+    const savedOk = await step.run("save-transcription", async () => {
       const supabase = createAdminClient();
+      const { data: photo } = await supabase
+        .from("submission_photos")
+        .select("id")
+        .eq("id", photoId)
+        .single();
+      if (!photo) return false;
       await supabase
         .from("submission_photos")
         .update({
@@ -70,12 +85,21 @@ export const transcribePhoto = inngest.createFunction(
           processing_completed_at: new Date().toISOString(),
         })
         .eq("id", photoId);
+      return true;
     });
+
+    if (!savedOk) return { success: false, photoId, reason: "photo deleted" };
 
     // Step 5: Delete photo from storage (transcription is saved, original no longer needed)
     await step.run("delete-storage-file", async () => {
       const supabase = createAdminClient();
-      await supabase.storage.from("submission-photos").remove([storagePath]);
+      const { data: photo } = await supabase
+        .from("submission_photos")
+        .select("id, storage_path")
+        .eq("id", photoId)
+        .single();
+      if (!photo || !photo.storage_path) return;
+      await supabase.storage.from("submission-photos").remove([photo.storage_path]);
       await supabase
         .from("submission_photos")
         .update({ storage_path: null })
@@ -86,13 +110,21 @@ export const transcribePhoto = inngest.createFunction(
     await step.run("check-submission-complete", async () => {
       const supabase = createAdminClient();
 
+      // If submission was reset, don't update it
+      const { data: sub } = await supabase
+        .from("submissions")
+        .select("status")
+        .eq("id", submissionId)
+        .single();
+      if (!sub || sub.status !== "processing") return;
+
       const { data: photos } = await supabase
         .from("submission_photos")
         .select("status, raw_transcription, page_number")
         .eq("submission_id", submissionId)
         .order("page_number");
 
-      if (!photos) return;
+      if (!photos || photos.length === 0) return;
 
       const allDone = photos.every(
         (p) => p.status === "completed" || p.status === "failed"

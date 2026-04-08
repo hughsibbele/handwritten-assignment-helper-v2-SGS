@@ -1,10 +1,10 @@
 "use client";
 
 import { Fragment, useEffect, useState, useCallback, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +23,7 @@ import {
   ExternalLink,
   AlertTriangle,
   ArrowLeft,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,9 +37,11 @@ interface Submission {
   transcription_text: string | null;
   gdoc_url: string | null;
   canvas_submission_url: string | null;
+  assignment_id: string;
   assignment: {
     title: string;
     due_date: string | null;
+    course_id: string;
     canvas_submit_by_default: boolean;
     canvas_discussion_topic_id: number | null;
     canvas_submission_types: string[] | null;
@@ -197,9 +200,11 @@ function PizzaTracker({ steps }: { steps: TrackerStep[] }) {
 function SuccessPanel({
   submission,
   editedText,
+  resubmitHref,
 }: {
   submission: Submission;
   editedText: string;
+  resubmitHref: string;
 }) {
   return (
     <div className="space-y-4">
@@ -245,15 +250,24 @@ function SuccessPanel({
         <p className="whitespace-pre-wrap text-sm">{editedText}</p>
       </div>
 
-      {/* Back to dashboard + close message */}
+      {/* Back to dashboard + resubmit + close message */}
       <div className="flex flex-col items-center gap-3 pt-2">
-        <Link
-          href="/student/dashboard"
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/student/dashboard"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Link>
+          <Link
+            href={resubmitHref}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Resubmit
+          </Link>
+        </div>
         <p className="text-sm text-muted-foreground">
           You can close this window.
         </p>
@@ -268,6 +282,7 @@ function SuccessPanel({
 
 export default function SubmissionPage() {
   const params = useParams();
+  const router = useRouter();
   const submissionId = params.submissionId as string;
   const supabase = createClient();
 
@@ -277,6 +292,7 @@ export default function SubmissionPage() {
   const [submitToCanvas, setSubmitToCanvas] = useState(false);
   const [hasCanvasId, setHasCanvasId] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Use refs to avoid stale closures in loadData without adding them as deps
@@ -304,10 +320,11 @@ export default function SubmissionPage() {
     const { data: sub } = await supabase
       .from("submissions")
       .select(
-        `id, status, transcription_text, gdoc_url, canvas_submission_url,
+        `id, status, transcription_text, gdoc_url, canvas_submission_url, assignment_id,
          assignment:assignments(
            title,
            due_date,
+           course_id,
            canvas_submit_by_default,
            canvas_discussion_topic_id,
            canvas_submission_types,
@@ -428,6 +445,36 @@ export default function SubmissionPage() {
     }
   }
 
+  async function handleReset() {
+    if (
+      !confirm(
+        "This will clear your photos and transcription. You'll need to upload again. Continue?"
+      )
+    )
+      return;
+    setResetting(true);
+    try {
+      const res = await fetch(`/api/submissions/${submissionId}/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "reset" }),
+      });
+      if (res.ok) {
+        const courseId = submission?.assignment?.course_id;
+        const assignmentId = submission?.assignment_id;
+        router.push(
+          `/student/courses/${courseId}/assignments/${assignmentId}`
+        );
+      } else {
+        toast.error("Failed to reset submission");
+        setResetting(false);
+      }
+    } catch {
+      toast.error("Failed to reset submission");
+      setResetting(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -459,6 +506,12 @@ export default function SubmissionPage() {
     ? "Post to Canvas discussion"
     : "Submit to Canvas assignment";
 
+  const canResetOrStartOver =
+    ["draft", "processing", "review"].includes(submission.status);
+  const courseId = submission.assignment?.course_id;
+  const assignmentId = submission.assignment_id;
+  const resubmitHref = `/student/courses/${courseId}/assignments/${assignmentId}?resubmit=true`;
+
   // Tracker needs to know if Canvas was/will be submitted
   const canvasWasSubmitted = submission.status === "submitted";
   const canvasRequested = canvasWasSubmitted || (submitToCanvas && hasCanvasId);
@@ -483,6 +536,40 @@ export default function SubmissionPage() {
           <PizzaTracker steps={trackerSteps} />
 
           <Separator />
+
+          {/* Start Over button — available during in-progress states */}
+          {canResetOrStartOver && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                disabled={resetting}
+              >
+                {resetting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                )}
+                Start Over
+              </Button>
+            </div>
+          )}
+
+          {/* Draft with no photos — show link back to upload */}
+          {submission.status === "draft" && photos.length === 0 && (
+            <div className="py-4 text-center">
+              <p className="mb-3 text-sm text-muted-foreground">
+                No content yet. Upload your photos to get started.
+              </p>
+              <Link
+                href={`/student/courses/${courseId}/assignments/${assignmentId}`}
+                className={buttonVariants()}
+              >
+                Go to Upload
+              </Link>
+            </div>
+          )}
 
           {/* Processing: per-page transcription progress */}
           {isProcessing && (
@@ -571,7 +658,11 @@ export default function SubmissionPage() {
 
           {/* Success state */}
           {isDone && (
-            <SuccessPanel submission={submission} editedText={editedText} />
+            <SuccessPanel
+              submission={submission}
+              editedText={editedText}
+              resubmitHref={resubmitHref}
+            />
           )}
         </CardContent>
       </Card>

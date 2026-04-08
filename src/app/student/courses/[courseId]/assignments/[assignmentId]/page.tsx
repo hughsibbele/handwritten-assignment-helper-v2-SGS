@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PhotoDropzone } from "@/components/upload/photo-dropzone";
 import {
@@ -12,8 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { Loader2, CheckCircle2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface Assignment {
   id: string;
@@ -23,34 +25,140 @@ interface Assignment {
   course: { name: string } | null;
 }
 
+interface ExistingSubmission {
+  id: string;
+  status: string;
+  attempt_number: number;
+}
+
+type PageState =
+  | "loading"
+  | "not-found"
+  | "upload"         // fresh submission or resubmit ready
+  | "already-submitted" // confirmed/submitted, no ?resubmit
+  | "redirecting";   // in-progress, redirecting to review page
+
 export default function AssignmentUploadPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [pageState, setPageState] = useState<PageState>("loading");
+  const [existingSub, setExistingSub] = useState<ExistingSubmission | null>(null);
+  const [isResubmission, setIsResubmission] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const assignmentId = params.assignmentId as string;
+  const courseId = params.courseId as string;
+  const resubmitParam = searchParams.get("resubmit") === "true";
 
   useEffect(() => {
-    async function loadAssignment() {
-      const { data } = await supabase
+    async function load() {
+      // Load assignment
+      const { data: assignmentData } = await supabase
         .from("assignments")
         .select("id, title, description, due_date, course:courses(name)")
         .eq("id", assignmentId)
         .single();
 
-      setAssignment(data as unknown as Assignment);
-      setLoading(false);
+      if (!assignmentData) {
+        setPageState("not-found");
+        return;
+      }
+      setAssignment(assignmentData as unknown as Assignment);
+
+      // Check for existing submission
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setPageState("not-found");
+        return;
+      }
+
+      const { data: studentData } = await supabase
+        .from("students")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .single();
+
+      if (!studentData) {
+        // No student record yet — show upload (submission API will create one)
+        setPageState("upload");
+        return;
+      }
+
+      const { data: sub } = await supabase
+        .from("submissions")
+        .select("id, status, attempt_number")
+        .eq("assignment_id", assignmentId)
+        .eq("student_id", studentData.id)
+        .single();
+
+      if (!sub) {
+        setPageState("upload");
+        return;
+      }
+
+      const submission = sub as unknown as ExistingSubmission;
+      setExistingSub(submission);
+
+      const isDone = ["confirmed", "submitted"].includes(submission.status);
+      const inProgress = ["processing", "review"].includes(submission.status);
+      const isDraft = submission.status === "draft";
+
+      if (isDone && resubmitParam) {
+        // Resubmit: reset the submission and show upload
+        setResetting(true);
+        const res = await fetch(`/api/submissions/${submission.id}/reset`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "resubmit" }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setExistingSub({
+            ...submission,
+            status: "draft",
+            attempt_number: data.submission.attempt_number,
+          });
+          setIsResubmission(true);
+          setPageState("upload");
+        } else {
+          toast.error("Failed to start resubmission");
+          setPageState("already-submitted");
+        }
+        setResetting(false);
+      } else if (isDone) {
+        setPageState("already-submitted");
+      } else if (inProgress) {
+        setPageState("redirecting");
+        router.replace(`/student/submissions/${submission.id}`);
+      } else if (isDraft) {
+        // Check if there are existing photos (partially started)
+        const { count } = await supabase
+          .from("submission_photos")
+          .select("id", { count: "exact", head: true })
+          .eq("submission_id", submission.id);
+        if (count && count > 0) {
+          setPageState("redirecting");
+          router.replace(`/student/submissions/${submission.id}`);
+        } else {
+          setPageState("upload");
+        }
+      }
     }
-    loadAssignment();
-  }, [assignmentId, supabase]);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignmentId]);
 
   async function handleUpload(files: File[]) {
     setUploading(true);
     try {
-      // 1. Create submission
+      // 1. Create/get submission
       const createRes = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -93,7 +201,7 @@ export default function AssignmentUploadPage() {
     }
   }
 
-  if (loading) {
+  if (pageState === "loading" || pageState === "redirecting" || resetting) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -101,8 +209,49 @@ export default function AssignmentUploadPage() {
     );
   }
 
-  if (!assignment) {
+  if (pageState === "not-found" || !assignment) {
     return <p className="text-muted-foreground">Assignment not found.</p>;
+  }
+
+  if (pageState === "already-submitted" && existingSub) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CardTitle>{assignment.title}</CardTitle>
+              <Badge variant="default">Submitted</Badge>
+            </div>
+            <CardDescription>
+              {(assignment.course as unknown as { name: string })?.name}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border bg-green-50 p-4 text-center dark:bg-green-950/20">
+              <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-600" />
+              <p className="font-medium">
+                You&apos;ve already submitted this assignment.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Link
+                href={`/student/submissions/${existingSub.id}`}
+                className={buttonVariants({ variant: "outline", className: "flex-1" })}
+              >
+                View Submission
+              </Link>
+              <Link
+                href={`/student/courses/${courseId}/assignments/${assignmentId}?resubmit=true`}
+                className={buttonVariants({ className: "flex-1" })}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Resubmit
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -111,7 +260,12 @@ export default function AssignmentUploadPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <CardTitle>{assignment.title}</CardTitle>
-            {assignment.due_date && (
+            {isResubmission && (
+              <Badge variant="secondary">
+                Resubmission {existingSub?.attempt_number ?? 2}
+              </Badge>
+            )}
+            {!isResubmission && assignment.due_date && (
               <Badge variant="outline">
                 Due {new Date(assignment.due_date).toLocaleDateString()}
               </Badge>
@@ -119,9 +273,22 @@ export default function AssignmentUploadPage() {
           </div>
           <CardDescription>
             {(assignment.course as unknown as { name: string })?.name}
+            {isResubmission && assignment.due_date && (
+              <span className="ml-2">
+                &middot; Due{" "}
+                {new Date(assignment.due_date).toLocaleDateString()}
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isResubmission && (
+            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+              Starting a new submission. Your previous submission will remain
+              unchanged.
+            </div>
+          )}
+
           {assignment.description && (
             <p className="mb-4 text-sm text-muted-foreground">
               {assignment.description}
