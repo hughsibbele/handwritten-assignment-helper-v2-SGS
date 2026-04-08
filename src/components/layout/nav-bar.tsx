@@ -34,7 +34,7 @@ export function NavBar({
           >
             <span className="text-primary">EHS</span>{" "}
             <span className="hidden text-foreground sm:inline">
-              Assignment Helper
+              Handwritten Assignment Helper
             </span>
           </span>
           {role === "teacher" && (

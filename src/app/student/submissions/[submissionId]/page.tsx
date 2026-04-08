@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { Fragment, useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Card,
   CardContent,
@@ -20,15 +22,23 @@ import {
   FileText,
   ExternalLink,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface Submission {
   id: string;
   status: string;
   transcription_text: string | null;
   gdoc_url: string | null;
+  canvas_submission_url: string | null;
   assignment: {
     title: string;
+    due_date: string | null;
     canvas_submit_by_default: boolean;
     canvas_discussion_topic_id: number | null;
     canvas_submission_types: string[] | null;
@@ -42,6 +52,219 @@ interface Photo {
   status: string;
   raw_transcription: string | null;
 }
+
+type StepStatus = "completed" | "active" | "upcoming";
+
+interface TrackerStep {
+  key: string;
+  label: string;
+  status: StepStatus;
+}
+
+// ---------------------------------------------------------------------------
+// Pizza Tracker
+// ---------------------------------------------------------------------------
+
+function getTrackerSteps(
+  submission: Submission,
+  canvasRequested: boolean
+): TrackerStep[] {
+  const s = submission.status;
+  const hasDoc = !!submission.gdoc_url;
+  const steps: TrackerStep[] = [];
+
+  // 1. Photos Uploaded — always completed if we're on this page
+  steps.push({ key: "uploaded", label: "Photos Uploaded", status: "completed" });
+
+  // 2. Transcribing
+  steps.push({
+    key: "transcribing",
+    label: "Transcribing",
+    status:
+      s === "processing"
+        ? "active"
+        : s === "draft"
+          ? "upcoming"
+          : "completed",
+  });
+
+  // 3. Review & Edit
+  steps.push({
+    key: "review",
+    label: "Review & Edit",
+    status:
+      s === "review"
+        ? "active"
+        : ["draft", "processing"].includes(s)
+          ? "upcoming"
+          : "completed",
+  });
+
+  // 4. Google Doc Created
+  steps.push({
+    key: "gdoc",
+    label: "Google Doc",
+    status: hasDoc
+      ? "completed"
+      : s === "confirmed" || s === "submitted"
+        ? "active"
+        : "upcoming",
+  });
+
+  // 5. Submitted to Canvas (conditional)
+  if (canvasRequested) {
+    steps.push({
+      key: "canvas",
+      label: "Canvas",
+      status:
+        s === "submitted"
+          ? "completed"
+          : s === "confirmed" && hasDoc
+            ? "active"
+            : "upcoming",
+    });
+  }
+
+  // 6. Complete
+  const finalDone = canvasRequested
+    ? s === "submitted"
+    : s === "confirmed" && hasDoc;
+  steps.push({
+    key: "complete",
+    label: "Complete!",
+    status: finalDone ? "completed" : "upcoming",
+  });
+
+  return steps;
+}
+
+function PizzaTracker({ steps }: { steps: TrackerStep[] }) {
+  return (
+    <div className="flex items-start justify-between gap-0">
+      {steps.map((step, i) => (
+        <Fragment key={step.key}>
+          {/* Step circle + label */}
+          <div className="flex flex-col items-center gap-1.5">
+            <div
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-500",
+                step.status === "completed" &&
+                  "bg-primary text-primary-foreground",
+                step.status === "active" &&
+                  "border-2 border-primary text-primary animate-pulse",
+                step.status === "upcoming" &&
+                  "border-2 border-muted-foreground/30 text-muted-foreground/50"
+              )}
+            >
+              {step.status === "completed" ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                i + 1
+              )}
+            </div>
+            <span
+              className={cn(
+                "max-w-[72px] text-center text-[11px] leading-tight sm:max-w-[80px] sm:text-xs",
+                step.status === "completed" && "font-medium text-primary",
+                step.status === "active" && "font-semibold text-foreground",
+                step.status === "upcoming" && "text-muted-foreground/50"
+              )}
+            >
+              {step.label}
+            </span>
+          </div>
+          {/* Connector line */}
+          {i < steps.length - 1 && (
+            <div
+              className={cn(
+                "mt-4 h-0.5 flex-1 transition-colors duration-500",
+                step.status === "completed"
+                  ? "bg-primary"
+                  : "bg-muted-foreground/20"
+              )}
+            />
+          )}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Success Panel
+// ---------------------------------------------------------------------------
+
+function SuccessPanel({
+  submission,
+  editedText,
+}: {
+  submission: Submission;
+  editedText: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-green-50 p-6 text-center dark:bg-green-950/20">
+        <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-green-600" />
+        <p className="text-lg font-medium">
+          {submission.status === "submitted"
+            ? "Submitted to Canvas!"
+            : "Transcription confirmed!"}
+        </p>
+
+        {/* Links */}
+        <div className="mt-4 flex flex-col items-center gap-2">
+          {submission.gdoc_url && (
+            <a
+              href={submission.gdoc_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline"
+            >
+              <FileText className="h-4 w-4" />
+              Open Google Doc
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+          {submission.canvas_submission_url && (
+            <a
+              href={submission.canvas_submission_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline"
+            >
+              <ExternalLink className="h-4 w-4" />
+              View Canvas Submission
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Transcription preview */}
+      <div className="rounded-lg border p-4">
+        <p className="mb-2 text-sm font-medium">Your transcription:</p>
+        <p className="whitespace-pre-wrap text-sm">{editedText}</p>
+      </div>
+
+      {/* Back to dashboard + close message */}
+      <div className="flex flex-col items-center gap-3 pt-2">
+        <Link
+          href="/student/dashboard"
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Link>
+        <p className="text-sm text-muted-foreground">
+          You can close this window.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
 
 export default function SubmissionPage() {
   const params = useParams();
@@ -81,9 +304,10 @@ export default function SubmissionPage() {
     const { data: sub } = await supabase
       .from("submissions")
       .select(
-        `id, status, transcription_text, gdoc_url,
+        `id, status, transcription_text, gdoc_url, canvas_submission_url,
          assignment:assignments(
            title,
+           due_date,
            canvas_submit_by_default,
            canvas_discussion_topic_id,
            canvas_submission_types,
@@ -192,6 +416,8 @@ export default function SubmissionPage() {
               ...prev,
               status: data.canvasSubmitted ? "submitted" : "confirmed",
               gdoc_url: data.gdocUrl ?? prev.gdoc_url,
+              canvas_submission_url:
+                data.canvasSubmissionUrl ?? prev.canvas_submission_url,
             }
           : prev
       );
@@ -233,6 +459,11 @@ export default function SubmissionPage() {
     ? "Post to Canvas discussion"
     : "Submit to Canvas assignment";
 
+  // Tracker needs to know if Canvas was/will be submitted
+  const canvasWasSubmitted = submission.status === "submitted";
+  const canvasRequested = canvasWasSubmitted || (submitToCanvas && hasCanvasId);
+  const trackerSteps = getTrackerSteps(submission, canvasRequested);
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Card>
@@ -247,8 +478,13 @@ export default function SubmissionPage() {
             <StatusBadge status={submission.status} />
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Processing status */}
+        <CardContent className="space-y-6">
+          {/* Pizza Tracker */}
+          <PizzaTracker steps={trackerSteps} />
+
+          <Separator />
+
+          {/* Processing: per-page transcription progress */}
           {isProcessing && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
@@ -333,40 +569,19 @@ export default function SubmissionPage() {
             </>
           )}
 
-          {/* Confirmed / submitted state */}
+          {/* Success state */}
           {isDone && (
-            <div className="space-y-4">
-              <div className="rounded-lg border bg-green-50 p-4 text-center dark:bg-green-950/20">
-                <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-600" />
-                <p className="font-medium">
-                  {submission.status === "submitted"
-                    ? "Submitted to Canvas!"
-                    : "Transcription confirmed!"}
-                </p>
-                {submission.gdoc_url && (
-                  <a
-                    href={submission.gdoc_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 text-sm text-primary underline"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Open Google Doc
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
-              <div className="rounded-lg border p-4">
-                <p className="mb-2 text-sm font-medium">Your transcription:</p>
-                <p className="whitespace-pre-wrap text-sm">{editedText}</p>
-              </div>
-            </div>
+            <SuccessPanel submission={submission} editedText={editedText} />
           )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Status Badge
+// ---------------------------------------------------------------------------
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<

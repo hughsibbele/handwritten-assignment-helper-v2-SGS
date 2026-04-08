@@ -40,11 +40,13 @@ export function PhotoDropzone({
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = useCallback((files: File[]) => {
-    const newPreviews = files.map((file) => ({
-      id: crypto.randomUUID(),
-      file,
-      url: URL.createObjectURL(file),
-    }));
+    const newPreviews = files
+      .map((file) => ({
+        id: crypto.randomUUID(),
+        file,
+        url: URL.createObjectURL(file),
+      }))
+      .sort((a, b) => a.file.lastModified - b.file.lastModified);
     setPreviews((prev) => [...prev, ...newPreviews]);
   }, []);
 
@@ -184,9 +186,10 @@ export function PhotoDropzone({
           </DndContext>
 
           {previews.length > 1 && (
-            <p className="text-center text-xs text-muted-foreground">
-              Drag to reorder pages
-            </p>
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm font-medium text-secondary-foreground">
+              <GripVertical className="h-4 w-4" />
+              Drag photos to reorder pages
+            </div>
           )}
 
           <Button
@@ -321,15 +324,10 @@ function SortablePhoto({
         />
       </div>
 
-      {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="absolute left-1 top-1 rounded bg-black/50 p-1 text-white touch-none"
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
+      {/* Page number badge */}
+      <div className="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+        {index + 1}
+      </div>
 
       {/* Remove button — always visible (no hover trick, works on touch) */}
       <button
@@ -340,9 +338,16 @@ function SortablePhoto({
         <X className="h-3 w-3" />
       </button>
 
-      <p className="mt-1 text-center text-xs text-muted-foreground">
-        Page {index + 1}
-      </p>
+      {/* Drag handle — full-width bar at bottom */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1.5 rounded-b-lg bg-black/60 py-1.5 text-white touch-none"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-4 w-4" />
+        <span className="text-xs font-medium">Page {index + 1}</span>
+      </button>
     </div>
   );
 }

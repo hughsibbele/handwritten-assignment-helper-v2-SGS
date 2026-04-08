@@ -7,6 +7,14 @@ import { getOrCreateCourseFolder } from "@/lib/google/drive";
 import { CanvasClient } from "@/lib/canvas/client";
 import { z } from "zod";
 
+/** Convert plain text to simple HTML paragraphs for Canvas. */
+function textToHtml(text: string): string {
+  return text
+    .split(/\n\n+/)
+    .map((para) => `<p>${para.replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
 const bodySchema = z.object({
   transcriptionText: z.string().min(1),
   submitToCanvas: z.boolean().default(false),
@@ -46,6 +54,7 @@ export async function POST(
       students!inner ( auth_user_id, display_name, canvas_user_id ),
       assignments!inner (
         title,
+        due_date,
         course_id,
         canvas_assignment_id,
         canvas_submission_types,
@@ -82,6 +91,7 @@ export async function POST(
 
   const assignment = submission.assignments as unknown as {
     title: string;
+    due_date: string | null;
     course_id: string;
     canvas_assignment_id: number | null;
     canvas_submission_types: string[] | null;
@@ -151,12 +161,14 @@ export async function POST(
       teacherEmail
     );
 
-    const docTitle = `${assignment.title} - ${student.display_name}`;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const docTitle = `${assignment.title} - ${student.display_name} (${dateStr})`;
     const { docId, docUrl } = await createGoogleDoc(
       googleClient,
       docTitle,
       parsed.data.transcriptionText,
-      folderId
+      folderId,
+      { assignmentTitle: assignment.title, dueDate: assignment.due_date }
     );
 
     gdocUrl = docUrl;
@@ -178,6 +190,7 @@ export async function POST(
 
   // Canvas submission (independent of Google Doc — uses transcription text directly)
   let canvasSubmitted = false;
+  let canvasSubmissionUrl: string | null = null;
   if (parsed.data.submitToCanvas) {
     try {
       const teacher = assignment.courses.teachers;
@@ -200,24 +213,28 @@ export async function POST(
         const supportsTextEntry =
           submissionTypes.includes("online_text_entry");
 
+        const htmlBody = textToHtml(parsed.data.transcriptionText);
+
         if (isDiscussion && assignment.canvas_discussion_topic_id) {
           // Post as a discussion entry
           await canvas.postDiscussionEntry(
             assignment.courses.canvas_course_id,
             assignment.canvas_discussion_topic_id,
             student.canvas_user_id,
-            parsed.data.transcriptionText
+            htmlBody
           );
           canvasSubmitted = true;
+          canvasSubmissionUrl = `${teacher.canvas_base_url}/courses/${assignment.courses.canvas_course_id}/discussion_topics/${assignment.canvas_discussion_topic_id}`;
         } else if (supportsTextEntry) {
           // Submit as text entry
           await canvas.submitTextEntry(
             assignment.courses.canvas_course_id,
             assignment.canvas_assignment_id,
             student.canvas_user_id,
-            parsed.data.transcriptionText
+            htmlBody
           );
           canvasSubmitted = true;
+          canvasSubmissionUrl = `${teacher.canvas_base_url}/courses/${assignment.courses.canvas_course_id}/assignments/${assignment.canvas_assignment_id}/submissions/${student.canvas_user_id}`;
         } else {
           warnings.push(
             "This Canvas assignment doesn't accept text submissions — Canvas submission skipped."
@@ -230,6 +247,7 @@ export async function POST(
             .update({
               status: "submitted",
               submitted_to_canvas_at: new Date().toISOString(),
+              canvas_submission_url: canvasSubmissionUrl,
               updated_at: new Date().toISOString(),
             })
             .eq("id", submissionId);
@@ -247,6 +265,7 @@ export async function POST(
     success: true,
     gdocUrl,
     canvasSubmitted,
+    canvasSubmissionUrl,
     warnings: warnings.length > 0 ? warnings : undefined,
   });
 }
