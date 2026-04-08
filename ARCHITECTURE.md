@@ -10,7 +10,7 @@ graph TB
     end
 
     subgraph App ["Next.js App (Vercel)"]
-        MW["Middleware<br/><i>Auth guard + role routing</i>"]
+        MW["Proxy<br/><i>Auth guard + role routing</i>"]
         TP["Teacher Pages<br/><i>/teacher/setup, /teacher/dashboard,<br/>/teacher/courses/[id]</i>"]
         SP["Student Pages<br/><i>/student/dashboard,<br/>/student/courses/.../assignments/[id],<br/>/student/submissions/[id]</i>"]
         API["API Routes<br/><i>/api/auth, /api/submissions,<br/>/api/canvas, /api/courses,<br/>/api/inngest</i>"]
@@ -236,7 +236,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant U as User (Browser)
-    participant MW as Middleware
+    participant PX as Proxy
     participant App as Next.js
     participant SB as Supabase Auth
     participant G as Google OAuth
@@ -256,16 +256,48 @@ sequenceDiagram
     else User email matches a student record (from Canvas sync)
         App->>SB: Link auth_user_id to student, save Google tokens
         App-->>U: Redirect → /student/dashboard
-    else No matching record
-        App-->>U: Redirect → /student/dashboard (new student)
+    else No matching record (new user)
+        App->>SB: Create student record, save Google tokens
+        App-->>U: Redirect → /student/dashboard
     end
 
     Note over U,G: Subsequent Requests
-    U->>MW: Any protected route
-    MW->>SB: Validate session
+    U->>PX: Any protected route
+    PX->>SB: Validate session
     alt Valid session
-        MW->>App: Continue to route
+        PX->>App: Continue to route
     else Invalid/expired
-        MW-->>U: Redirect → /login
+        PX-->>U: Redirect → /login
     end
+```
+
+## Class Code Join Flow
+
+For students not in Canvas who need to join a course via class code.
+
+```mermaid
+sequenceDiagram
+    participant S as Student (Browser)
+    participant App as Next.js API
+    participant SB as Supabase
+
+    Note over S,SB: Student logs in (no Canvas record)
+    S->>App: Google OAuth login
+    App->>SB: Create student record (no canvas_user_id)
+    App-->>S: Redirect → /student/dashboard
+
+    Note over S,SB: Join a course
+    S->>S: Enter class code on dashboard
+    S->>App: POST /api/courses/join { joinCode }
+    App->>SB: Look up course by join_code
+    App->>SB: Upsert enrollment (student + course)
+    App-->>S: Success → page refresh
+
+    Note over S,SB: Use the app (no Canvas submission)
+    S->>S: Upload photos, review transcription
+    S->>App: POST /api/submissions/{id}/confirm
+    App->>SB: Save transcription
+    App->>App: Create Google Doc (works normally)
+    Note right of App: Canvas toggle hidden<br/>(no canvas_user_id)
+    App-->>S: Google Doc link
 ```

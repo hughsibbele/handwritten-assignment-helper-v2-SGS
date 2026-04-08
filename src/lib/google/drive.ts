@@ -1,4 +1,5 @@
 import { google, type Auth } from "googleapis";
+// Admin client required: writes enrollment folder ID in cross-role context
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { CanvasClient } from "@/lib/canvas/client";
 
 // GET: List available courses from Canvas (no DB writes)
@@ -14,8 +13,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createAdminClient();
-  const { data: teacher } = await admin
+  const { data: teacher } = await supabase
     .from("teachers")
     .select("canvas_base_url, canvas_api_token")
     .eq("auth_user_id", user.id)

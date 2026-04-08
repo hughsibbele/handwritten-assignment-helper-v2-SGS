@@ -17,8 +17,8 @@ export async function GET(request: Request) {
       const providerToken = data.session.provider_token;
       const providerRefreshToken = data.session.provider_refresh_token;
 
-      if (providerToken && userEmail) {
-        // Use admin client — RLS can't find students with null auth_user_id
+      if (userEmail) {
+        // Admin client required: must find students with NULL auth_user_id (RLS can't match)
         const admin = createAdminClient();
 
         // Try to find student by auth_user_id first, then by email
@@ -54,8 +54,34 @@ export async function GET(request: Request) {
           }
         }
 
-        // Save Google tokens if we found a student record
-        if (studentId) {
+        // Create a new student record for users not in Canvas (e.g. joining via class code)
+        // Skip if user is a teacher — don't pollute the students table
+        if (!studentId) {
+          const { data: isTeacher } = await admin
+            .from("teachers")
+            .select("id")
+            .eq("auth_user_id", userId)
+            .single();
+
+          if (!isTeacher) {
+            const displayName =
+              data.session.user.user_metadata?.full_name ||
+              userEmail.split("@")[0];
+            const { data: newStudent } = await admin
+              .from("students")
+              .insert({
+                auth_user_id: userId,
+                email: userEmail,
+                display_name: displayName,
+              })
+              .select("id")
+              .single();
+            studentId = newStudent?.id;
+          }
+        }
+
+        // Save Google tokens (only when provider returns them)
+        if (studentId && providerToken) {
           await admin
             .from("students")
             .update({

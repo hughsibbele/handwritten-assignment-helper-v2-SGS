@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+// Admin client required: reads any student's tokens (caller may be teacher/system context)
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**

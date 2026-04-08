@@ -1,4 +1,5 @@
 import { inngest } from "../client";
+// Admin client required: Inngest background job has no user session/auth cookies
 import { createAdminClient } from "@/lib/supabase/admin";
 import { transcribeImage } from "@/lib/gemini/transcribe";
 
@@ -9,7 +10,7 @@ export const transcribePhoto = inngest.createFunction(
     concurrency: { limit: 5 },
     triggers: [{ event: "photo.uploaded" }],
   },
-  async ({ event, step }: { event: { data: { photoId: string; submissionId: string; storagePath: string } }; step: any }) => {
+  async ({ event, step }: { event: { data: { photoId: string; submissionId: string; storagePath: string } }; step: { run: <T>(id: string, fn: () => Promise<T>) => Promise<T> } }) => {
     const { photoId, submissionId, storagePath } = event.data;
 
     // Step 1: Mark as processing

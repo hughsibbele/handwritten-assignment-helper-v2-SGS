@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
+// Admin client required: bulk upserts creating student/enrollment records for other users
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CanvasClient } from "@/lib/canvas/client";
 import { z } from "zod";

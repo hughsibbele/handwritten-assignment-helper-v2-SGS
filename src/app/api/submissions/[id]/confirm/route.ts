@@ -32,7 +32,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  // Use admin client for cross-table queries (RLS recursion workaround)
+  // Admin client required: student needs teacher's Canvas credentials (cross-role access)
   const admin = createAdminClient();
 
   // Fetch submission with related data needed for doc creation + Canvas submission

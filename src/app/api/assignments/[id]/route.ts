@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const patchSchema = z.object({
@@ -27,12 +26,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-
-  // Verify this assignment belongs to a course owned by this teacher
-  const { data: assignment } = await admin
+  // RLS ensures only the owning teacher can see/update this assignment
+  const { data: assignment } = await supabase
     .from("assignments")
-    .select("id, courses!inner(teacher_id, teachers!inner(auth_user_id))")
+    .select("id")
     .eq("id", assignmentId)
     .single();
 
@@ -43,15 +40,7 @@ export async function PATCH(
     );
   }
 
-  const course = assignment.courses as unknown as {
-    teacher_id: string;
-    teachers: { auth_user_id: string };
-  };
-  if (course.teachers.auth_user_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const { error } = await admin
+  const { error } = await supabase
     .from("assignments")
     .update({
       ...parsed.data,

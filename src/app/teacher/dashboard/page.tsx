@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -18,9 +17,7 @@ export default async function TeacherDashboard() {
     redirect("/login");
   }
 
-  const admin = createAdminClient();
-
-  const { data: teacher } = await admin
+  const { data: teacher } = await supabase
     .from("teachers")
     .select("*")
     .eq("auth_user_id", user.id)
@@ -36,7 +33,7 @@ export default async function TeacherDashboard() {
   }
 
   // Get teacher's courses
-  const { data: courses } = await admin
+  const { data: courses } = await supabase
     .from("courses")
     .select(
       `

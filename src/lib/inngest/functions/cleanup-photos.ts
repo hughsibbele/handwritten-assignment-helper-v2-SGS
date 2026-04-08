@@ -1,4 +1,5 @@
 import { inngest } from "../client";
+// Admin client required: Inngest cron job has no user session/auth cookies
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const cleanupOldPhotos = inngest.createFunction(

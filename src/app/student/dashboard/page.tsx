@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookOpen, Clock } from "lucide-react";
+import { JoinCourseForm } from "@/components/student/join-course-form";
 
 export default async function StudentDashboard() {
   const supabase = await createServerSupabase();
@@ -22,12 +23,15 @@ export default async function StudentDashboard() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Welcome!</h1>
         <Card>
-          <CardContent className="py-8 text-center">
+          <CardContent className="space-y-4 py-8">
             <p className="text-muted-foreground">
-              You are not enrolled in any courses yet. Ask your teacher to add
-              you to a course.
+              Enter your class code to join a course.
             </p>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <JoinCourseForm />
+            <p className="text-sm text-muted-foreground">
+              Your teacher will give you the class code.
+            </p>
+            <p className="text-sm text-muted-foreground">
               Are you a teacher?{" "}
               <Link
                 href="/setup"
@@ -66,22 +70,24 @@ export default async function StudentDashboard() {
       })
       .filter(Boolean) ?? [];
 
-  const { data: assignments } = await supabase
-    .from("assignments")
-    .select(
-      `
-      id,
-      title,
-      due_date,
-      course:courses (
+  const { data: assignments } = courseIds.length > 0
+    ? await supabase
+        .from("assignments")
+        .select(
+          `
         id,
-        name
-      )
-    `
-    )
-    .in("course_id", courseIds)
-    .eq("is_active", true)
-    .order("due_date", { ascending: false });
+        title,
+        due_date,
+        course:courses (
+          id,
+          name
+        )
+      `
+        )
+        .in("course_id", courseIds)
+        .eq("is_active", true)
+        .order("due_date", { ascending: false })
+    : { data: [] };
 
   // Get recent submissions
   const { data: submissions } = await supabase
@@ -198,6 +204,15 @@ export default async function StudentDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Join another course</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <JoinCourseForm />
+        </CardContent>
+      </Card>
     </div>
   );
 }

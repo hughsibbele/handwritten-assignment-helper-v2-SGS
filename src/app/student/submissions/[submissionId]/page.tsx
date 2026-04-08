@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -52,10 +52,32 @@ export default function SubmissionPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [editedText, setEditedText] = useState("");
   const [submitToCanvas, setSubmitToCanvas] = useState(false);
+  const [hasCanvasId, setHasCanvasId] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Use refs to avoid stale closures in loadData without adding them as deps
+  const editedTextRef = useRef(editedText);
+  editedTextRef.current = editedText;
+  const hasLoadedRef = useRef(false);
+
   const loadData = useCallback(async () => {
+    // Check if student has a Canvas ID (determines Canvas toggle visibility)
+    // Only on first load — canvas_user_id doesn't change mid-session
+    if (!hasLoadedRef.current) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: studentInfo } = await supabase
+          .from("students")
+          .select("canvas_user_id")
+          .eq("auth_user_id", user.id)
+          .single();
+        setHasCanvasId(!!studentInfo?.canvas_user_id);
+      }
+    }
+
     const { data: sub } = await supabase
       .from("submissions")
       .select(
@@ -74,11 +96,11 @@ export default function SubmissionPage() {
     if (sub) {
       const s = sub as unknown as Submission;
       setSubmission(s);
-      if (s.transcription_text && !editedText) {
+      if (s.transcription_text && !editedTextRef.current) {
         setEditedText(s.transcription_text);
       }
       // Set Canvas toggle default from teacher's setting (only on first load)
-      if (!submission) {
+      if (!hasLoadedRef.current) {
         setSubmitToCanvas(s.assignment?.canvas_submit_by_default ?? false);
       }
     }
@@ -93,8 +115,9 @@ export default function SubmissionPage() {
       setPhotos(photoData);
     }
 
+    hasLoadedRef.current = true;
     setLoading(false);
-  }, [submissionId, supabase, editedText, submission]);
+  }, [submissionId, supabase]);
 
   useEffect(() => {
     loadData();
@@ -270,28 +293,30 @@ export default function SubmissionPage() {
                 className="min-h-[200px] font-mono text-sm sm:min-h-[400px]"
               />
 
-              {/* Canvas submission toggle */}
-              <label className="flex items-start gap-3 rounded-lg border p-3">
-                <input
-                  type="checkbox"
-                  checked={submitToCanvas && canSubmitToCanvas}
-                  disabled={!canSubmitToCanvas}
-                  onChange={(e) => setSubmitToCanvas(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300"
-                />
-                <div className="space-y-1">
-                  <span className="text-sm font-medium">
-                    {canvasToggleLabel}
-                  </span>
-                  {!canSubmitToCanvas && (
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <AlertTriangle className="h-3 w-3" />
-                      This assignment doesn&apos;t accept text submissions on
-                      Canvas
-                    </p>
-                  )}
-                </div>
-              </label>
+              {/* Canvas submission toggle — hidden for non-Canvas students */}
+              {hasCanvasId && (
+                <label className="flex items-start gap-3 rounded-lg border p-3">
+                  <input
+                    type="checkbox"
+                    checked={submitToCanvas && canSubmitToCanvas}
+                    disabled={!canSubmitToCanvas}
+                    onChange={(e) => setSubmitToCanvas(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                  />
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium">
+                      {canvasToggleLabel}
+                    </span>
+                    {!canSubmitToCanvas && (
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <AlertTriangle className="h-3 w-3" />
+                        This assignment doesn&apos;t accept text submissions on
+                        Canvas
+                      </p>
+                    )}
+                  </div>
+                </label>
+              )}
 
               <Button
                 onClick={handleConfirm}
