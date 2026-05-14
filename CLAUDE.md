@@ -93,7 +93,7 @@ Same rule for new helper functions: `GRANT EXECUTE ... TO authenticated, service
 
 ## Status
 
-See [`../BUILD_PLAN.md`](../BUILD_PLAN.md) for ecosystem-wide milestones and current state. This file is local navigation for the Handwritten Helper codebase.
+See [`../BUILD_PLAN.md`](../BUILD_PLAN.md) ([on GitHub](https://github.com/hughsibbele/super-grader-suite/blob/main/BUILD_PLAN.md)) for ecosystem-wide milestones and current state. This file is local navigation for the Handwritten Helper codebase.
 
 ## Services configured
 
