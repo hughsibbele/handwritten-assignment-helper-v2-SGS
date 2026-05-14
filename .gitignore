@@ -40,6 +40,9 @@ yarn-error.log*
 # supabase CLI scratch state
 supabase/.temp/
 
+# Local Claude Code state — settings, transcripts, history. Never tracked.
+.claude/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
