@@ -5,7 +5,9 @@ work, transcribe via AI, and save as Google Docs. Integrates with Canvas LMS
 for assignments/rosters and can auto-submit back to Canvas.
 
 Architecture, current status, and project state live in
-[`CLAUDE.md`](./CLAUDE.md). This README focuses on getting set up.
+[`CLAUDE.md`](./CLAUDE.md). Per-phase narrative of what's been built —
+including the satellite integration with Super Grader — lives in
+[`BUILD_PLAN.md`](./BUILD_PLAN.md). This README focuses on getting set up.
 
 ## Stack
 
