@@ -8,7 +8,7 @@ const TIMEOUT_MS = 5_000;
  * same envelope shape the GET endpoint returns so super-grader hits one
  * deserializer either way.
  *
- * Silent no-op when SUPER_GRADER_INGEST_URL or SUPER_GRADER_INGEST_TOKEN is
+ * Silent no-op when SUPER_GRADER_API_URL or SUPER_GRADER_INGEST_TOKEN is
  * unset — that's the local/preview shape where super-grader isn't deployed
  * (or isn't deployed yet). The student/teacher flow on the calling route
  * must never block on this; awaited in the caller only so we log failures.
@@ -20,7 +20,7 @@ export async function pushToSuperGrader(
   canvasUserId: number,
   canvasAssignmentId: number,
 ): Promise<void> {
-  const ingestUrl = process.env.SUPER_GRADER_INGEST_URL;
+  const ingestUrl = process.env.SUPER_GRADER_API_URL;
   const ingestToken = process.env.SUPER_GRADER_INGEST_TOKEN;
   if (!ingestUrl || !ingestToken) {
     console.log(
