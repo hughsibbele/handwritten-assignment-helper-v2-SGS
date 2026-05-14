@@ -91,38 +91,26 @@ Same rule for new helper functions: `GRANT EXECUTE ... TO authenticated, service
 - Logo: `/public/ehs-logo.webp`
 - Style guide: https://www.episcopalhighschool.org/ehs-style-guide
 
-## Current status (as of 2026-05-13)
+## Status
 
-Phases 1, 2, and 3 shipped in code on 2026-05-13 (this session). See `BUILD_PLAN.md` for the per-phase narrative. Quick summary of what was added on top of the pre-Phase-1 baseline (the original 2026-04-08 feature set — auth, Canvas sync, photo upload, transcription pipeline, Google Docs, Canvas submission, mobile UX, EHS branding — is all still here, unchanged):
+See [`../BUILD_PLAN.md`](../BUILD_PLAN.md) for ecosystem-wide milestones and current state. This file is local navigation for the Handwritten Helper codebase.
 
-- **Phase 1** — transcription guardrails (`maxOutputTokens: 4096`, prompt skips Name/Date/Period headers), upfront block on assignments Canvas can't accept, Sentry env-gated, active-term Canvas-sync filter, proximity sort + search on both teacher/student assignment lists
-- **Phase 2** — super-grader satellite integration: anonymizer (HMAC token + roster scrub), `/api/super-grader/result` and `/api/super-grader/prompt` GET endpoints with bearer auth, fire-and-forget webhook on submission confirm, sentinel marker on Canvas body, lazy `anon_token` backfill, admin layer (`ADMIN_EMAILS` env-var allowlist), `/admin/prompts` editor with version-bump-on-save, DB-backed prompt loader with 10-min in-process cache
-- **Phase 3** — per-teacher Gemini daily cap with SECURITY DEFINER atomic check (`FOR UPDATE` row lock), fail-open on DB error, `/admin/retention` page with UTF-8-BOM CSV export and "type DELETE" hard-delete chunked at 200/batch
+## Services configured
 
-### Services configured
-- Supabase project: `ynpfipjjnltqxujavdba` (linked via CLI). **Migrations 001-022 applied 2026-05-13 via `supabase db reset --linked` after a separate Claude session in the Harkness Helper repo accidentally linked the same Supabase project and ran HH's migrations against it. The reset wiped all data (rosters, courses, submissions, photo metadata). Pre-Phase-1 testing data is gone; auth.users survived. Next teacher dashboard load will re-sync Canvas.**
-- Google Cloud: OAuth consent screen (internal), Drive + Docs APIs enabled, OAuth credentials created
+- Supabase project: `ynpfipjjnltqxujavdba` (linked via CLI). **Migrations 001-022 applied 2026-05-13 via `supabase db reset --linked` after a separate Claude session in the Harkness Helper repo accidentally linked the same Supabase project and ran HH's migrations against it. The reset wiped all data (rosters, courses, submissions, photo metadata); auth.users survived. Suite plan M0.3 adds a `supabase link` safety check so this can't repeat.**
+- Google Cloud: OAuth consent screen (internal), Drive + Docs APIs enabled
 - Gemini API key configured
 - Inngest: account created, local dev mode works
-- Canvas: connected to `episcopalhighschool.instructure.com`, 2 courses (FLC + Chekhov, 2025-2026) — re-sync needed after the 2026-05-13 data wipe
+- Canvas: connected to `episcopalhighschool.instructure.com`
 
-### What's NOT done yet
-1. **Phase 1-3 production deploy** — code is committed but not pushed to Vercel. Need to deploy + set new env vars on the project (`SUPER_GRADER_SALT`, `HANDWRITTEN_API_TOKEN`, `ADMIN_EMAILS`, optional `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` / `GEMINI_DEFAULT_DAILY_CAP`). See `README.md` → Secrets and `BUILD_PLAN.md` → Pending deploy work.
-2. **Smoke test in browser** — verify `/admin/prompts` edit + version bump, `/admin/retention` CSV download, a submission flow produces the sentinel marker on the Canvas body
-3. **Super Grader webhook target** — `SUPER_GRADER_API_URL` + `SUPER_GRADER_INGEST_TOKEN` stay blank until SG deploys. Our `pushToSuperGrader()` silently no-ops, so this is fine — but the webhook plumbing isn't validated end-to-end yet.
-4. **Admin layer graduation** — currently `ADMIN_EMAILS` env-var allowlist. If we ever add a second admin or a second admin surface beyond the prompt editor + retention, graduate to AI Documenter's `admins` table + `is_admin()` SECURITY DEFINER + `INITIAL_ADMIN_EMAIL` self-bootstrap pattern. See project memory.
-5. **GitHub template repo** — plan to create a GitHub template repository so other schools can self-host their own instance. Needs generic branding (remove EHS-specific references), a setup guide for Supabase/Google Cloud/Gemini/Inngest/Vercel, and `.env.example` cleanup. The app is already multi-tenant per-teacher.
+## To resume development
 
-### To resume development
-**Remind the user to start the dev server themselves** — it's better for them to run it so they can see the logs. Walk them through it if needed:
-1. Open a terminal, `cd ~/Code/handwritten-assignment-helper`
-2. Run `npm run dev` (leave this terminal open — logs appear here)
-3. Open a second terminal for Claude or other commands
-4. Optionally, in a third terminal: `npx inngest-cli@latest dev` (needed for background transcription)
-5. App runs at http://localhost:3000
+**Remind the user to start the dev server themselves** — it's better for them to run it so they can see the logs:
+
+1. `cd ~/Code/handwritten-assignment-helper`
+2. `npm run dev` (leave open — logs appear here)
+3. Second terminal for Claude
+4. Optionally: `npx inngest-cli@latest dev` (needed for background transcription)
+5. App at http://localhost:3000
 6. Teacher dashboard: http://localhost:3000/teacher/dashboard
 7. Admin (requires email in `ADMIN_EMAILS`): http://localhost:3000/admin/prompts and http://localhost:3000/admin/retention
-8. Test transcription: http://localhost:3000/test-transcribe
-9. Stop the server with Ctrl+C when done
-
-**Next priority**: Finish wiring `.env.local` (Vercel env pull for the existing secrets + paste the salt + generate `HANDWRITTEN_API_TOKEN`), smoke-test Phase 2 surfaces in the browser, then push Phase 1-3 to production Vercel.
