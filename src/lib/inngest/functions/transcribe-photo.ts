@@ -2,6 +2,7 @@ import { inngest } from "../client";
 // Admin client required: Inngest background job has no user session/auth cookies
 import { createAdminClient } from "@/lib/supabase/admin";
 import { transcribeImage } from "@/lib/gemini/transcribe";
+import { checkAndIncrementGeminiCall } from "@/lib/gemini/rate-limit";
 
 export const transcribePhoto = inngest.createFunction(
   {
@@ -62,6 +63,47 @@ export const transcribePhoto = inngest.createFunction(
         mimeType,
       };
     });
+
+    // Step 3a: Check per-teacher daily Gemini cap. Fails open on DB errors —
+    // see src/lib/gemini/rate-limit.ts. The teacher lookup is its own step so
+    // Inngest's retry-with-checkpoint behavior doesn't re-run the rate-limit
+    // check on every retry of "call-gemini" — once cleared, it's cleared.
+    const rateLimitCheck = await step.run("check-rate-limit", async () => {
+      const supabase = createAdminClient();
+      const { data: row } = await supabase
+        .from("submissions")
+        .select("assignments!inner ( courses!inner ( teacher_id ) )")
+        .eq("id", submissionId)
+        .single();
+      const teacherId =
+        (row as unknown as {
+          assignments: { courses: { teacher_id: string } };
+        } | null)?.assignments?.courses?.teacher_id ?? null;
+      if (!teacherId) {
+        // Submission with no teacher context — surprising, but fail open
+        // rather than block. Logged so we notice if it ever happens.
+        console.error("[rate-limit] no teacher_id for submission", submissionId);
+        return { allowed: true, teacherId: null };
+      }
+      const allowed = await checkAndIncrementGeminiCall(teacherId);
+      return { allowed, teacherId };
+    });
+
+    if (!rateLimitCheck.allowed) {
+      const supabase = createAdminClient();
+      await supabase
+        .from("submission_photos")
+        .update({
+          status: "failed",
+          processing_completed_at: new Date().toISOString(),
+        })
+        .eq("id", photoId);
+      return {
+        success: false,
+        photoId,
+        reason: "gemini daily cap reached for teacher",
+      };
+    }
 
     // Step 3: Transcribe with Gemini
     const transcription = await step.run("call-gemini", async () => {

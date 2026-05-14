@@ -26,6 +26,11 @@ export default function AdminLayout({
               Prompts
             </Button>
           </Link>
+          <Link href="/admin/retention">
+            <Button variant="ghost" size="sm">
+              Retention
+            </Button>
+          </Link>
           <Link href="/teacher/dashboard">
             <Button variant="outline" size="sm">
               Back to dashboard
