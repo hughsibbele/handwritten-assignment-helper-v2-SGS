@@ -43,6 +43,25 @@ RLS recursion was fixed via SECURITY DEFINER helper functions (migrations 015-01
 - **Google auth/drive helpers** — read any student's tokens from system context
 - **Course join API** — student can't see unenrolled courses via RLS
 
+## Migration template (new tables)
+
+Supabase is dropping the default `public`-schema auto-grant on new tables — enforced on existing projects 2026-10-30 (per their 2026-05-13 announcement). Existing tables keep their grants; nothing breaks today. But every `CREATE TABLE` in `public` from here on should pair the CREATE with explicit grants + RLS + policies in the same migration:
+
+```sql
+CREATE TABLE public.your_table ( ... );
+
+ALTER TABLE public.your_table ENABLE ROW LEVEL SECURITY;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.your_table TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.your_table TO service_role;
+-- intentionally NO grant to anon — Handwritten Helper is authenticated-only;
+--   anon has no business reading or writing anything in this schema.
+
+CREATE POLICY "..." ON public.your_table FOR ... TO authenticated USING (...);
+```
+
+Same rule for new helper functions: `GRANT EXECUTE ... TO authenticated, service_role`, with an explicit `REVOKE EXECUTE ... FROM anon` if the function ends up in the `public` schema. Supabase auto-grants EXECUTE to `anon` on every new public function and its `REVOKE ... FROM PUBLIC` doesn't clear role-specific grants, so the explicit revoke is the safe pattern.
+
 ## Branding
 - EHS Maroon: `#7a1e46`, EHS Gray: `#54565b`, Light Blue: `#C4DCEB`, Dark Blue: `#006890`
 - Headings: Lora (serif). Body: Geist Sans.
