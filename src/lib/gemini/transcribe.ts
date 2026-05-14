@@ -1,6 +1,9 @@
 import { getGeminiClient } from "./client";
+import { loadPrompt } from "@/lib/prompts/load";
 
-const TRANSCRIPTION_SYSTEM_INSTRUCTION = `You are a handwriting transcription assistant for a school assignment. Your job is to faithfully transcribe a student's handwritten work.
+/** Fallback used when the prompts table row is missing/unreachable.
+ *  Keep in sync with the seed in supabase/migrations/021_prompts_table.sql. */
+const DEFAULT_TRANSCRIPTION_SYSTEM_INSTRUCTION = `You are a handwriting transcription assistant for a school assignment. Your job is to faithfully transcribe a student's handwritten work.
 
 Rules:
 - Transcribe the student's actual words as accurately as possible
@@ -27,10 +30,14 @@ export async function transcribeImage(
   imageBase64: string,
   mimeType: string
 ): Promise<string> {
+  const systemInstruction = await loadPrompt(
+    "handwritten_image_transcription",
+    DEFAULT_TRANSCRIPTION_SYSTEM_INSTRUCTION,
+  );
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
-    systemInstruction: TRANSCRIPTION_SYSTEM_INSTRUCTION,
+    systemInstruction,
     generationConfig: {
       // Gemini 2.5 thinking tokens count against this budget; one dense page
       // of prose lands well under 1k output tokens, the rest is headroom.

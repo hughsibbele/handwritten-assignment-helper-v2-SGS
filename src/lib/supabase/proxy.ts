@@ -31,11 +31,13 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Allow auth routes and static files
+  // Allow auth routes, public routes, and system-to-system endpoints (the
+  // /api/super-grader/* GETs are bearer-auth'd at the route, not via session).
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/inngest") ||
+    pathname.startsWith("/api/super-grader") ||
     pathname.startsWith("/test-") ||
     pathname.startsWith("/api/test-") ||
     pathname === "/"
@@ -48,6 +50,22 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  // Admin routes: gate on ADMIN_EMAILS env-var allowlist. The full
+  // admins-table apparatus (AI Documenter's pattern) is deliberately deferred
+  // until HAH has more than one admin or more than one admin surface.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    const allowed = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const email = user.email?.toLowerCase();
+    if (!email || !allowed.includes(email)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
   }
 
   // Allow teacher setup for any authenticated user (so they can become a teacher)

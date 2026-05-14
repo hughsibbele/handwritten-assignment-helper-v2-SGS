@@ -5,6 +5,8 @@ import { getStudentGoogleClient } from "@/lib/google/auth";
 import { createGoogleDoc } from "@/lib/google/docs";
 import { getOrCreateCourseFolder } from "@/lib/google/drive";
 import { CanvasClient } from "@/lib/canvas/client";
+import { anonToken } from "@/lib/anonymizer/token";
+import { pushToSuperGrader } from "@/lib/peers/notify";
 import { z } from "zod";
 
 /** Convert plain text to simple HTML paragraphs for Canvas. */
@@ -13,6 +15,17 @@ function textToHtml(text: string): string {
     .split(/\n\n+/)
     .map((para) => `<p>${para.replace(/\n/g, "<br>")}</p>`)
     .join("");
+}
+
+/**
+ * Sentinel marker super-grader's Canvas-scrape pipeline matches against
+ * (regex: `<!--\s*handwritten:` per super-grader's planning/integration-contract.md
+ * §12). Tagged submissions are skipped so super-grader uses the webhook
+ * envelope as canonical instead of treating the auto-submitted body as
+ * student-authored work.
+ */
+function withSentinelMarker(htmlBody: string, submissionId: string): string {
+  return `<!-- handwritten:transcription v=1 submission-id=${submissionId} -->\n${htmlBody}`;
 }
 
 const bodySchema = z.object({
@@ -52,7 +65,7 @@ export async function POST(
       student_id,
       assignment_id,
       attempt_number,
-      students!inner ( auth_user_id, display_name, canvas_user_id ),
+      students!inner ( auth_user_id, display_name, canvas_user_id, email, anon_token ),
       assignments!inner (
         title,
         due_date,
@@ -85,6 +98,8 @@ export async function POST(
     auth_user_id: string;
     display_name: string;
     canvas_user_id: number | null;
+    email: string | null;
+    anon_token: string | null;
   };
   if (student.auth_user_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -217,25 +232,30 @@ export async function POST(
           submissionTypes.includes("online_text_entry");
 
         const htmlBody = textToHtml(parsed.data.transcriptionText);
+        const taggedBody = withSentinelMarker(htmlBody, submissionId);
+        let asSentBody: string | null = null;
 
         if (isDiscussion && assignment.canvas_discussion_topic_id) {
-          // Post as a discussion entry
+          // Post as a discussion entry (no sentinel marker — super-grader's
+          // scrape pipeline reads submission bodies, not discussion entries).
           await canvas.postDiscussionEntry(
             assignment.courses.canvas_course_id,
             assignment.canvas_discussion_topic_id,
             student.canvas_user_id,
             htmlBody
           );
+          asSentBody = htmlBody;
           canvasSubmitted = true;
           canvasSubmissionUrl = `${teacher.canvas_base_url}/courses/${assignment.courses.canvas_course_id}/discussion_topics/${assignment.canvas_discussion_topic_id}`;
         } else if (supportsTextEntry) {
-          // Submit as text entry
+          // Submit as text entry with the sentinel marker prepended.
           await canvas.submitTextEntry(
             assignment.courses.canvas_course_id,
             assignment.canvas_assignment_id,
             student.canvas_user_id,
-            htmlBody
+            taggedBody
           );
+          asSentBody = taggedBody;
           canvasSubmitted = true;
           canvasSubmissionUrl = `${teacher.canvas_base_url}/courses/${assignment.courses.canvas_course_id}/assignments/${assignment.canvas_assignment_id}/submissions/${student.canvas_user_id}`;
         } else {
@@ -251,6 +271,7 @@ export async function POST(
               status: "submitted",
               submitted_to_canvas_at: new Date().toISOString(),
               canvas_submission_url: canvasSubmissionUrl,
+              canvas_submission_text: asSentBody,
               updated_at: new Date().toISOString(),
             })
             .eq("id", submissionId);
@@ -262,6 +283,44 @@ export async function POST(
         `Canvas submission failed: ${err instanceof Error ? err.message : "Unknown error"}`
       );
     }
+  }
+
+  // Lazy anon_token backfill. Computed in Node from canvas_user_id + email,
+  // persisted so the UNIQUE constraint surfaces a collision if one ever
+  // occurs. Skipped for class-code students (no canvas_user_id) and when
+  // the salt isn't configured.
+  if (
+    !student.anon_token &&
+    student.canvas_user_id &&
+    student.email &&
+    process.env.SUPER_GRADER_SALT
+  ) {
+    try {
+      const token = anonToken(student.canvas_user_id, student.email);
+      const { error: backfillErr } = await admin
+        .from("students")
+        .update({ anon_token: token })
+        .eq("id", submission.student_id);
+      if (backfillErr) {
+        console.error("[anon-token] backfill failed", {
+          studentId: submission.student_id,
+          error: backfillErr,
+        });
+      }
+    } catch (err) {
+      console.error("[anon-token] compute failed", err);
+    }
+  }
+
+  // Fire-and-forget push to super-grader. Awaited so failures land in logs,
+  // but errors are swallowed inside pushToSuperGrader — never blocks the
+  // student-visible response. Only meaningful for Canvas students; for
+  // class-code-only students the envelope can't be built and we skip.
+  if (student.canvas_user_id && assignment.canvas_assignment_id) {
+    await pushToSuperGrader(
+      student.canvas_user_id,
+      assignment.canvas_assignment_id,
+    );
   }
 
   return NextResponse.json({
