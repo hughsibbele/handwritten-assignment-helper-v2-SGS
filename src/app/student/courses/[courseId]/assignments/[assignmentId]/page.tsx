@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Loader2, CheckCircle2, RotateCcw } from "lucide-react";
+import { Loader2, CheckCircle2, RotateCcw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -22,6 +22,9 @@ interface Assignment {
   title: string;
   description: string | null;
   due_date: string | null;
+  canvas_submission_types: string[] | null;
+  canvas_discussion_topic_id: number | null;
+  canvas_submit_by_default: boolean;
   course: { name: string } | null;
 }
 
@@ -50,6 +53,7 @@ export default function AssignmentUploadPage() {
   const [existingSub, setExistingSub] = useState<ExistingSubmission | null>(null);
   const [isResubmission, setIsResubmission] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [hasCanvasId, setHasCanvasId] = useState(false);
 
   const assignmentId = params.assignmentId as string;
   const courseId = params.courseId as string;
@@ -60,7 +64,9 @@ export default function AssignmentUploadPage() {
       // Load assignment
       const { data: assignmentData } = await supabase
         .from("assignments")
-        .select("id, title, description, due_date, course:courses(name)")
+        .select(
+          "id, title, description, due_date, canvas_submission_types, canvas_discussion_topic_id, canvas_submit_by_default, course:courses(name)"
+        )
         .eq("id", assignmentId)
         .single();
 
@@ -81,7 +87,7 @@ export default function AssignmentUploadPage() {
 
       const { data: studentData } = await supabase
         .from("students")
-        .select("id")
+        .select("id, canvas_user_id")
         .eq("auth_user_id", user.id)
         .single();
 
@@ -90,6 +96,8 @@ export default function AssignmentUploadPage() {
         setPageState("upload");
         return;
       }
+
+      setHasCanvasId(!!(studentData as { canvas_user_id: number | null }).canvas_user_id);
 
       const { data: sub } = await supabase
         .from("submissions")
@@ -254,6 +262,16 @@ export default function AssignmentUploadPage() {
     );
   }
 
+  // Block the upload when the teacher has Canvas auto-submit on but the
+  // Canvas assignment doesn't accept the kind of submission we'd post.
+  // Non-Canvas students (no canvas_user_id) bypass this — they'd just get
+  // a Google Doc anyway, so the type of the Canvas assignment is moot.
+  const canvasSupportsText =
+    !!assignment.canvas_discussion_topic_id ||
+    (assignment.canvas_submission_types ?? []).includes("online_text_entry");
+  const blocked =
+    hasCanvasId && assignment.canvas_submit_by_default && !canvasSupportsText;
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Card>
@@ -295,13 +313,34 @@ export default function AssignmentUploadPage() {
             </p>
           )}
 
-          <PhotoDropzone onFilesSelected={handleUpload} disabled={uploading} />
-
-          {uploading && (
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Uploading photos...
+          {blocked ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-700/50 dark:bg-amber-950/20">
+              <div className="mb-2 flex items-center gap-2 font-medium text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="h-4 w-4" />
+                Can&apos;t submit to Canvas
+              </div>
+              <p className="text-amber-900/90 dark:text-amber-200/90">
+                Your teacher set this assignment to auto-submit through
+                Handwritten Helper, but the Canvas assignment isn&apos;t
+                configured to accept text submissions. Please ask your teacher
+                to update the Canvas assignment to allow &quot;Text Entry,&quot;
+                or submit your handwritten work directly in Canvas.
+              </p>
             </div>
+          ) : (
+            <>
+              <PhotoDropzone
+                onFilesSelected={handleUpload}
+                disabled={uploading}
+              />
+
+              {uploading && (
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Uploading photos...
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

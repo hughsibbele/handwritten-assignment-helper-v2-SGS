@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Card,
@@ -10,10 +10,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Users, RefreshCw } from "lucide-react";
+import { Loader2, ArrowLeft, Users, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { sortByProximity } from "@/lib/assignment-sort";
 
 interface Course {
   id: string;
@@ -41,6 +43,15 @@ export default function TeacherCoursePage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const visibleAssignments = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q
+      ? assignments.filter((a) => a.title.toLowerCase().includes(q))
+      : assignments;
+    return sortByProximity(filtered);
+  }, [assignments, search]);
 
   async function loadCourse() {
     const res = await fetch(`/api/courses/${courseId}`);
@@ -167,8 +178,23 @@ export default function TeacherCoursePage() {
               No assignments synced yet.
             </p>
           ) : (
-            <div className="divide-y">
-              {assignments.map((a) => {
+            <>
+              <div className="relative mb-3">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search assignments…"
+                  className="pl-8"
+                />
+              </div>
+              {visibleAssignments.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No assignments match &ldquo;{search}&rdquo;.
+                </p>
+              )}
+              <div className="divide-y">
+                {visibleAssignments.map((a) => {
                 const isDiscussion = !!a.canvas_discussion_topic_id;
                 const submissionTypes = a.canvas_submission_types ?? [];
                 const canSubmit =
@@ -220,7 +246,8 @@ export default function TeacherCoursePage() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

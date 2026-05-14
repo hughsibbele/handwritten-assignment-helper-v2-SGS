@@ -49,11 +49,12 @@ export default async function TeacherDashboard() {
     .eq("teacher_id", teacher.id)
     .eq("is_active", true);
 
-  const courseIds = courses?.map((c) => c.id) ?? [];
+  const syncCandidates =
+    courses?.map((c) => ({ id: c.id, term: c.term ?? null })) ?? [];
 
   return (
     <div className="space-y-6">
-      <BackgroundSync courseIds={courseIds} />
+      <BackgroundSync courses={syncCandidates} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
         <div className="flex gap-2">
