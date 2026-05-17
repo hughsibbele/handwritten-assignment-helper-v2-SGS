@@ -4,10 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Pull-on-view prompt fetcher. Super-grader renders satellite-owned prompts
- * (read-only from its side) by fetching live from us. Matches the contract's
- * §11 "Handwritten Helper — pull instead of seed" pattern. Cache-Control
- * mirrors super-grader's own /api/prompts response so the prompts dashboard
- * stays responsive.
+ * (read-only from its side) by fetching live from us. Matches the shape
+ * super-grader's fetchLivePrompt expects: { body, version, updated_at }.
+ * Cache-Control mirrors super-grader's own /api/prompts response so the
+ * prompts dashboard stays responsive.
  */
 export async function GET(request: Request) {
   const authFail = checkSuperGraderBearer(request);
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const admin = createAdminClient();
   const { data: row } = await admin
     .from("prompts")
-    .select("owner, key, body, version")
+    .select("body, version, updated_at")
     .eq("owner", "handwritten")
     .eq("key", key)
     .single();
