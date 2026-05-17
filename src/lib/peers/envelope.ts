@@ -112,6 +112,8 @@ export async function buildEnvelopeForCanvasIds(
     },
   };
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
   return {
     schema_version: 1,
     peer: "handwritten",
@@ -127,6 +129,9 @@ export async function buildEnvelopeForCanvasIds(
       google_doc_url: sub.gdoc_url,
       page_count: pageCount ?? null,
       source_tag: "handwritten_helper",
+    },
+    links: {
+      detail_url: `${appUrl}/teacher/dashboard`,
     },
   };
 }

@@ -21,7 +21,7 @@ export type HandwrittenEnvelope = {
   anon_token: string;
   completed_at: string;
   summary: HandwrittenSummary;
-  links?: {
-    detail_url?: string;
+  links: {
+    detail_url: string;
   };
 };
