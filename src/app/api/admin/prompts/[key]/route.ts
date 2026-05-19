@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { invalidatePromptCache } from "@/lib/prompts/load";
 import { z } from "zod";
-
-// Proxy already enforces ADMIN_EMAILS for /api/admin/* — no per-route check.
 
 const bodySchema = z.object({
   body: z.string().min(1).max(50_000),
@@ -13,6 +12,10 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ key: string }> },
 ) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { key } = await params;
   const json = await request.json().catch(() => null);
   const parsed = bodySchema.safeParse(json);

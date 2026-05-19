@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { testCanvasConnection } from "@/lib/canvas/connection";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -26,24 +27,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { canvasBaseUrl, canvasApiToken } = parsed.data;
+  const canvasBaseUrl = parsed.data.canvasBaseUrl.replace(/\/+$/, "");
+  const canvasApiToken = parsed.data.canvasApiToken;
 
-  // Verify the Canvas token works
-  try {
-    const res = await fetch(`${canvasBaseUrl}/api/v1/users/self`, {
-      headers: { Authorization: `Bearer ${canvasApiToken}` },
-    });
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "Invalid Canvas token or URL. Could not connect to Canvas." },
-        { status: 400 }
-      );
-    }
-  } catch {
-    return NextResponse.json(
-      { error: "Could not reach Canvas. Check the URL." },
-      { status: 400 }
-    );
+  const test = await testCanvasConnection(canvasBaseUrl, canvasApiToken);
+  if (!test.ok) {
+    return NextResponse.json({ error: test.error }, { status: 400 });
   }
 
   // Upsert teacher record

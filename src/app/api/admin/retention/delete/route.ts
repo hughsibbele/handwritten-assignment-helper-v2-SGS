@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdmin } from "@/lib/auth/admin";
 import { z } from "zod";
-
-// Proxy enforces ADMIN_EMAILS for /api/admin/* — no per-route auth check.
 
 const bodySchema = z.object({
   beforeDate: z.string().nullable().optional(),
@@ -11,6 +10,10 @@ const bodySchema = z.object({
 const CHUNK = 200;
 
 export async function POST(request: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const json = await request.json().catch(() => null);
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {

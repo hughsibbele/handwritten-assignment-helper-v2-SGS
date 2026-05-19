@@ -29,7 +29,7 @@ Web app for Episcopal High School students to upload photos of handwritten work,
 - `src/app/` — Next.js App Router pages and API routes
 - `src/lib/` — shared libraries (supabase, canvas, gemini, google, inngest, anonymizer, peers, prompts, telemetry, utils)
 - `src/components/` — React components (ui/ for shadcn, upload/, teacher/, student/, admin/, layout/)
-- `src/proxy.ts` — Next.js 16 proxy (auth guard + role routing + `ADMIN_EMAILS` gate, formerly middleware.ts)
+- `src/proxy.ts` — Next.js 16 proxy (session refresh + teacher-role redirect; admin gate lives in `/admin/layout.tsx` + each `/api/admin/*` route via `isAdmin()`)
 - `instrumentation.ts` + `instrumentation-client.ts` (project root) — Sentry wiring, env-gated on `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN`
 - `supabase/migrations/` — SQL migration files (run in order, 001-022 applied)
 - Google Docs are created in the student's own Drive, in auto-created per-course folders shared with the teacher
@@ -43,7 +43,7 @@ Web app for Episcopal High School students to upload photos of handwritten work,
 - `src/lib/telemetry/sentry-init.ts` — DSN-gated Sentry init; no-op until configured
 
 ### Routes added since the 2026-04-08 snapshot
-- `/admin` — admin shell (gated by `ADMIN_EMAILS` proxy allowlist)
+- `/admin` — admin shell (gated by `isAdmin()` in the layout; backed by the `admins` table)
 - `/admin/prompts` — edit the seeded OCR prompt; version bumps on save
 - `/admin/retention` — CSV export (UTF-8 BOM) + chunked hard delete with "type DELETE" confirm
 - `/api/super-grader/result` — GET, bearer-auth via `HANDWRITTEN_API_TOKEN`, returns the `PeerResultEnvelope<HandwrittenSummary>`
@@ -64,7 +64,7 @@ RLS recursion was fixed via SECURITY DEFINER helper functions (migrations 015-01
 - **Google auth/drive helpers** — read any student's tokens from system context
 - **Course join API** — student can't see unenrolled courses via RLS
 - **`/api/super-grader/*`** — system-to-system endpoints, no user session
-- **`/admin/*` + `/api/admin/*`** — admin client behind the `ADMIN_EMAILS` proxy gate. There's intentionally no `admins` table or `is_admin()` SQL helper yet — see Future work below.
+- **`/admin/*` + `/api/admin/*`** — admin client behind the `isAdmin()` gate in `/admin/layout.tsx` + each `/api/admin/*` route (see `src/lib/auth/admin.ts`). Backed by the `admins` table from migration 023 with `INITIAL_ADMIN_EMAIL` self-bootstrap.
 
 ## Migration template (new tables)
 
@@ -113,4 +113,4 @@ See [`../BUILD_PLAN.md`](../BUILD_PLAN.md) ([on GitHub](https://github.com/hughs
 4. Optionally: `npx inngest-cli@latest dev` (needed for background transcription)
 5. App at http://localhost:3000
 6. Teacher dashboard: http://localhost:3000/teacher/dashboard
-7. Admin (requires email in `ADMIN_EMAILS`): http://localhost:3000/admin/prompts and http://localhost:3000/admin/retention
+7. Admin (requires an active row in `public.admins` — bootstrap on first sign-in via `INITIAL_ADMIN_EMAIL`): http://localhost:3000/admin/prompts and http://localhost:3000/admin/retention

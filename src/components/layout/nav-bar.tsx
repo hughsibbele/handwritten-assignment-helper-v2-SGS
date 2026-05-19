@@ -9,9 +9,11 @@ import Link from "next/link";
 export function NavBar({
   userEmail,
   role,
+  viewerIsAdmin = false,
 }: {
   userEmail: string;
   role: "teacher" | "student";
+  viewerIsAdmin?: boolean;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -26,7 +28,7 @@ export function NavBar({
 
   return (
     <header className="border-b bg-background">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4">
         <Link href={dashboardPath} className="flex items-center gap-2">
           <span
             className="text-lg font-semibold tracking-tight"
@@ -43,8 +45,34 @@ export function NavBar({
             </span>
           )}
         </Link>
-        <div className="flex items-center gap-2">
-          <span className="hidden text-sm text-muted-foreground sm:inline">
+
+        <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm">
+          {role === "teacher" && (
+            <>
+              <Link
+                href="/teacher/dashboard"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/teacher/setup"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Canvas &amp; Drive setup
+              </Link>
+              {viewerIsAdmin && (
+                <Link
+                  href="/admin/prompts"
+                  className="rounded-sm border border-primary/40 px-2 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                  title="School-wide admin console"
+                >
+                  Admin →
+                </Link>
+              )}
+            </>
+          )}
+          <span className="hidden text-xs italic text-muted-foreground sm:inline">
             {userEmail}
           </span>
           <Button variant="ghost" size="sm" onClick={handleSignOut}>
@@ -52,7 +80,7 @@ export function NavBar({
             <span className="hidden sm:inline">Sign out</span>
             <span className="sm:hidden">Out</span>
           </Button>
-        </div>
+        </nav>
       </div>
     </header>
   );

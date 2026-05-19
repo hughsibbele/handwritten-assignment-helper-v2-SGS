@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +14,19 @@ import Image from "next/image";
 
 export default function LoginPage() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  // Restrict the redirect target to a same-origin path to avoid open-redirect
+  // shenanigans — only honor strings starting with "/".
+  const rawNext = searchParams.get("next");
+  const next = rawNext && rawNext.startsWith("/") ? rawNext : "/";
 
   async function handleGoogleLogin() {
+    const callback = new URL("/api/auth/callback", window.location.origin);
+    if (next !== "/") callback.searchParams.set("next", next);
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: callback.toString(),
         scopes:
           "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents",
         queryParams: {

@@ -1,16 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { getCurrentAdminEmail } from "@/lib/auth/admin";
 
-/**
- * Admin shell. The proxy guards this whole subtree against the ADMIN_EMAILS
- * env-var allowlist — see src/lib/supabase/proxy.ts. There's intentionally
- * no per-route auth check here.
- */
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const email = await getCurrentAdminEmail();
+  if (!email) redirect("/");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

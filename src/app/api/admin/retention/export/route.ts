@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-// Proxy enforces ADMIN_EMAILS for /api/admin/* — no per-route auth check.
+import { isAdmin } from "@/lib/auth/admin";
 
 // Escape a single CSV field per RFC 4180: wrap in quotes, double any embedded
 // quote, normalize newlines. Null/undefined → empty string.
@@ -12,6 +11,10 @@ function csvField(value: unknown): string {
 }
 
 export async function GET(request: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const url = new URL(request.url);
   const before = url.searchParams.get("before");
 

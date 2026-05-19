@@ -59,6 +59,53 @@ export class CanvasClient {
     );
   }
 
+  async getAssignment(
+    courseId: number,
+    assignmentId: number,
+  ): Promise<CanvasAssignment> {
+    const url = `${this.baseUrl}/api/v1/courses/${courseId}/assignments/${assignmentId}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${this.token}` },
+    });
+    if (!res.ok) {
+      throw new Error(`Canvas API error: ${res.status} ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Update an assignment's description (or other editable fields). Uses
+   * form-encoded body — Canvas's RCE accepts both JSON and form, but
+   * form-encoded matches the shape AI Documenter uses for the install
+   * flow and avoids any nested-object quoting surprises.
+   */
+  async updateAssignment(
+    courseId: number,
+    assignmentId: number,
+    fields: { description?: string },
+  ): Promise<CanvasAssignment> {
+    const url = `${this.baseUrl}/api/v1/courses/${courseId}/assignments/${assignmentId}`;
+    const form = new URLSearchParams();
+    if (fields.description !== undefined) {
+      form.set("assignment[description]", fields.description);
+    }
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: form.toString(),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(
+        `Canvas assignment update failed (${res.status}): ${body}`,
+      );
+    }
+    return res.json();
+  }
+
   async getStudents(courseId: number): Promise<CanvasUser[]> {
     return this.fetchPaginated<CanvasUser>(
       `/api/v1/courses/${courseId}/users`,

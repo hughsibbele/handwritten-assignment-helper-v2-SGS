@@ -45,28 +45,20 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users to login, preserving the original
+  // pathname (and search) as ?next= so we can send them there after sign-in.
   if (!user) {
     const url = request.nextUrl.clone();
+    const nextTarget =
+      request.nextUrl.pathname + (request.nextUrl.search ?? "");
     url.pathname = "/login";
+    url.search = `?next=${encodeURIComponent(nextTarget)}`;
     return NextResponse.redirect(url);
   }
 
-  // Admin routes: gate on ADMIN_EMAILS env-var allowlist. The full
-  // admins-table apparatus (AI Documenter's pattern) is deliberately deferred
-  // until HAH has more than one admin or more than one admin surface.
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-    const allowed = (process.env.ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-    const email = user.email?.toLowerCase();
-    if (!email || !allowed.includes(email)) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
-    }
-  }
+  // Admin routes: the admin check lives in /admin/layout.tsx + each
+  // /api/admin/* route via isAdmin() in @/lib/auth/admin. The proxy stays
+  // session-only here.
 
   // Allow teacher setup for any authenticated user (so they can become a teacher)
   // Protect other teacher routes to verified teachers only

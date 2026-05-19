@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/auth/admin";
 import { NavBar } from "@/components/layout/nav-bar";
 
 export default async function TeacherLayout({
@@ -16,7 +17,8 @@ export default async function TeacherLayout({
     redirect("/login");
   }
 
-  // Verify teacher role
+  // Verify teacher role. The /teacher/setup carve-out lives in the proxy;
+  // anyone past it without a teacher row got redirected before we got here.
   const { data: teacher } = await supabase
     .from("teachers")
     .select("id")
@@ -27,9 +29,15 @@ export default async function TeacherLayout({
     redirect("/student/dashboard");
   }
 
+  const viewerIsAdmin = await isAdmin();
+
   return (
     <div className="flex min-h-screen flex-col">
-      <NavBar userEmail={user.email ?? ""} role="teacher" />
+      <NavBar
+        userEmail={user.email ?? ""}
+        role="teacher"
+        viewerIsAdmin={viewerIsAdmin}
+      />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
         {children}
       </main>

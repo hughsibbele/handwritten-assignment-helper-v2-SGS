@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookOpen, Clock } from "lucide-react";
-import { JoinCourseForm } from "@/components/student/join-course-form";
 import { UpcomingAssignments } from "@/components/student/upcoming-assignments";
 
 export default async function StudentDashboard() {
@@ -24,13 +23,19 @@ export default async function StudentDashboard() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Welcome!</h1>
         <Card>
-          <CardContent className="space-y-4 py-8">
+          <CardContent className="space-y-3 py-8">
             <p className="text-muted-foreground">
-              Enter your class code to join a course.
+              We don&apos;t see you on any course roster yet. To get started,
+              ask your teacher to:
             </p>
-            <JoinCourseForm />
-            <p className="text-sm text-muted-foreground">
-              Your teacher will give you the class code.
+            <ol className="ml-5 list-decimal space-y-1 text-sm text-muted-foreground">
+              <li>Install the &ldquo;Upload handwritten work&rdquo; card on
+                your Canvas assignment.</li>
+              <li>Sync their Canvas roster from the teacher dashboard.</li>
+            </ol>
+            <p className="pt-2 text-sm text-muted-foreground">
+              Then open the card in Canvas and you&apos;ll land back here
+              signed in.
             </p>
             <p className="text-sm text-muted-foreground">
               Are you a teacher?{" "}
@@ -127,80 +132,74 @@ export default async function StudentDashboard() {
     }
   }
 
-  const submissions = (allSubmissions ?? []).slice(0, 5);
+  const submissions = allSubmissions ?? [];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Your Dashboard</h1>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Upcoming assignments */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5" />
-              Assignments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UpcomingAssignments
-              assignments={assignments}
-              submissionByAssignment={submissionByAssignment}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Recent submissions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BookOpen className="h-5 w-5" />
-              Recent Submissions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!submissions || submissions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No submissions yet
-              </p>
-            ) : (
-              <ul className="space-y-3">
-                {submissions.map((s) => {
-                  const assignment = s.assignment as unknown as {
-                    title: string;
-                    course: { name: string };
-                  } | null;
-                  return (
-                    <li key={s.id}>
-                      <Link
-                        href={`/student/submissions/${s.id}`}
-                        className="block rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium">
-                            {assignment?.title ?? "Unknown"}
-                          </p>
-                          <StatusBadge status={s.status} />
-                        </div>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {assignment?.course?.name}
-                        </p>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+      <div>
+        <h1 className="text-2xl font-bold">Your work</h1>
+        <p className="text-sm text-muted-foreground">
+          Recent uploads and what&apos;s coming up. Start a new upload from
+          the &ldquo;Upload handwritten work&rdquo; card on the Canvas
+          assignment.
+        </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Join another course</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Clock className="h-5 w-5" />
+            Upcoming assignments
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <JoinCourseForm />
+          <UpcomingAssignments
+            assignments={assignments}
+            submissionByAssignment={submissionByAssignment}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <BookOpen className="h-5 w-5" />
+            Your submissions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {submissions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No submissions yet.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {submissions.map((s) => {
+                const assignment = s.assignment as unknown as {
+                  title: string;
+                  course: { name: string };
+                } | null;
+                return (
+                  <li key={s.id}>
+                    <Link
+                      href={`/student/submissions/${s.id}`}
+                      className="block rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">
+                          {assignment?.title ?? "Unknown"}
+                        </p>
+                        <StatusBadge status={s.status} />
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {assignment?.course?.name}
+                      </p>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>

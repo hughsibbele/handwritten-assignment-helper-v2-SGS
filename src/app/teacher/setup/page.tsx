@@ -21,12 +21,11 @@ export default function TeacherSetupPage() {
   const router = useRouter();
   const [canvasUrl, setCanvasUrl] = useState("");
   const [canvasToken, setCanvasToken] = useState("");
+  const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
-  const [courses, setCourses] = useState<
-    { id: number; name: string; term?: string }[]
-  >([]);
+  const [hasCourses, setHasCourses] = useState(false);
 
   useEffect(() => {
     async function checkSetup() {
@@ -37,7 +36,7 @@ export default function TeacherSetupPage() {
 
       const { data: teacher } = await supabase
         .from("teachers")
-        .select("canvas_base_url, canvas_api_token")
+        .select("id, canvas_base_url, canvas_api_token")
         .eq("auth_user_id", user.id)
         .single();
 
@@ -45,9 +44,38 @@ export default function TeacherSetupPage() {
         setCanvasUrl(teacher.canvas_base_url);
         setIsConfigured(!!teacher.canvas_api_token);
       }
+
+      if (teacher?.id) {
+        const { count } = await supabase
+          .from("courses")
+          .select("id", { count: "exact", head: true })
+          .eq("teacher_id", teacher.id);
+        setHasCourses((count ?? 0) > 0);
+      }
     }
     checkSetup();
   }, [supabase]);
+
+  async function handleTestCanvas() {
+    setTesting(true);
+    try {
+      const res = await fetch("/api/teacher/setup/canvas/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          canvasBaseUrl: canvasUrl.replace(/\/+$/, ""),
+          canvasApiToken: canvasToken,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Test failed");
+      toast.success(`Connected as ${data.user?.name ?? "Canvas user"}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Test failed");
+    } finally {
+      setTesting(false);
+    }
+  }
 
   async function handleSaveCanvas() {
     setSaving(true);
@@ -82,10 +110,9 @@ export default function TeacherSetupPage() {
     try {
       const res = await fetch("/api/canvas/courses/sync", { method: "POST" });
       if (!res.ok) throw new Error("Failed to sync courses");
-
       const data = await res.json();
-      setCourses(data.courses ?? []);
       toast.success(`Synced ${data.courses?.length ?? 0} courses from Canvas`);
+      setHasCourses((data.courses?.length ?? 0) > 0);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to sync courses"
@@ -97,21 +124,34 @@ export default function TeacherSetupPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Setup</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Canvas &amp; Drive setup</h1>
+        <p className="text-sm text-muted-foreground">
+          Connect your Canvas account and (soon) Google Drive. Your day-to-day
+          work lives on the{" "}
+          <a
+            href="/teacher/dashboard"
+            className="underline underline-offset-2"
+          >
+            dashboard
+          </a>
+          .
+        </p>
+      </div>
 
-      {/* Step 1: Canvas Config */}
+      {/* Section 1: Canvas connection */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {isConfigured && (
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             )}
-            Step 1: Connect Canvas
+            Canvas connection
           </CardTitle>
           <CardDescription>
             Enter your school&apos;s Canvas URL and your personal API token.
-            You can generate a token in Canvas under Account &gt; Settings &gt;
-            New Access Token.
+            Generate a token in Canvas under Account &gt; Settings &gt; New
+            Access Token.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -125,7 +165,7 @@ export default function TeacherSetupPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="canvas-token">API Token</Label>
+            <Label htmlFor="canvas-token">API token</Label>
             <Input
               id="canvas-token"
               type="password"
@@ -134,61 +174,74 @@ export default function TeacherSetupPage() {
               onChange={(e) => setCanvasToken(e.target.value)}
             />
           </div>
-          <Button
-            onClick={handleSaveCanvas}
-            disabled={saving || !canvasUrl || !canvasToken}
-          >
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Canvas Config
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={handleTestCanvas}
+              disabled={testing || saving || !canvasUrl || !canvasToken}
+            >
+              {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Test connection
+            </Button>
+            <Button
+              onClick={handleSaveCanvas}
+              disabled={saving || testing || !canvasUrl || !canvasToken}
+            >
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Canvas config
+            </Button>
+          </div>
+
+          {isConfigured && !hasCourses && (
+            <div className="rounded-md border border-dashed bg-muted/40 p-4 text-sm">
+              <p className="mb-2 font-medium">
+                Pull your courses to get started
+              </p>
+              <p className="mb-3 text-muted-foreground">
+                Syncs your active Canvas courses, assignments, and student
+                rosters. You only need to do this once — after that, the
+                dashboard keeps things in sync on its own.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handleSyncCourses} disabled={syncing}>
+                  {syncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sync courses from Canvas
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push("/teacher/dashboard")}
+                >
+                  Skip and go to dashboard
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {isConfigured && hasCourses && (
+            <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+              Courses synced. Re-sync happens automatically from the dashboard.
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Step 2: Sync Courses */}
-      {isConfigured && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Step 2: Sync Courses</CardTitle>
-            <CardDescription>
-              Pull your courses, assignments, and student rosters from Canvas.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={handleSyncCourses} disabled={syncing}>
-              {syncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sync Courses from Canvas
-            </Button>
-
-            {courses.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Synced courses:</p>
-                <ul className="space-y-1">
-                  {courses.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      {c.name}
-                      {c.term && (
-                        <span className="text-muted-foreground">
-                          ({c.term})
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="mt-4"
-                  onClick={() => router.push("/teacher/dashboard")}
-                >
-                  Go to Dashboard
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {/* Section 2: Drive setup (placeholder until M7.6) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Google Drive</CardTitle>
+          <CardDescription>
+            Where transcribed Google Docs are saved. Folder template and
+            sharing scope coming soon.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Today, each student&apos;s transcribed work lands in a per-course
+            folder in their own Drive, shared with you. Teacher-side Drive
+            customization (folder template, sharing scope) ships later.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
