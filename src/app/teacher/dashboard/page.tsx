@@ -48,7 +48,9 @@ export default async function TeacherDashboard() {
           title,
           due_date,
           canvas_assignment_id,
-          canvas_submit_by_default,
+          post_to_drive,
+          post_to_canvas_comment,
+          post_to_canvas_submission,
           canvas_submission_types,
           canvas_discussion_topic_id,
           is_active
@@ -90,7 +92,9 @@ export default async function TeacherDashboard() {
       title: string;
       due_date: string | null;
       canvas_assignment_id: number | null;
-      canvas_submit_by_default: boolean;
+      post_to_drive: boolean;
+      post_to_canvas_comment: boolean;
+      post_to_canvas_submission: boolean;
       canvas_submission_types: string[] | null;
       canvas_discussion_topic_id: number | null;
       is_active: boolean;
@@ -102,7 +106,9 @@ export default async function TeacherDashboard() {
         title: a.title,
         due_date: a.due_date,
         canvas_assignment_id: a.canvas_assignment_id,
-        canvas_submit_by_default: a.canvas_submit_by_default,
+        post_to_drive: a.post_to_drive,
+        post_to_canvas_comment: a.post_to_canvas_comment,
+        post_to_canvas_submission: a.post_to_canvas_submission,
         canvas_submission_types: a.canvas_submission_types,
         canvas_discussion_topic_id: a.canvas_discussion_topic_id,
         installed: installedSet.has(a.id),

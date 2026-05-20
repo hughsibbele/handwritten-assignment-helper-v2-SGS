@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, RefreshCw, Search, Settings2 } from "lucide-react";
+import { Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { sortByProximity } from "@/lib/assignment-sort";
+import {
+  bulkInstallAssignments,
+  bulkUninstallAssignments,
+  type BulkResult,
+} from "@/lib/actions/bulk-install";
 import type { AssignmentRow, CourseGroup } from "./dashboard.types";
 
 // Persist open/closed in sessionStorage so the user's selection survives a
@@ -32,6 +36,7 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
   const [open, setOpen] = useSessionFlag(`hah:course-${group.id}:open`, false);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   const filtered = useMemo(() => {
@@ -41,6 +46,23 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
       : group.assignments;
     return sortByProximity(list);
   }, [group.assignments, search]);
+
+  function toggleSelection(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  const selectedAssignments = useMemo(
+    () => filtered.filter((a) => selectedIds.has(a.id)),
+    [filtered, selectedIds],
+  );
 
   async function handleResync() {
     setSyncing(true);
@@ -116,6 +138,17 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
             </div>
           ) : (
             <>
+              {selectedIds.size > 0 && (
+                <div className="border-b border-stone-100 bg-stone-50 px-4 py-3 text-xs">
+                  <BulkActions
+                    courseId={group.id}
+                    selectedIds={Array.from(selectedIds)}
+                    selectedAssignments={selectedAssignments}
+                    onClearSelection={clearSelection}
+                  />
+                </div>
+              )}
+
               <div className="flex items-center gap-2 border-b border-stone-100 px-4 py-2">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
@@ -142,8 +175,9 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
                   {filtered.map((a) => (
                     <AssignmentRowItem
                       key={a.id}
-                      courseId={group.id}
                       assignment={a}
+                      checked={selectedIds.has(a.id)}
+                      onToggle={() => toggleSelection(a.id)}
                     />
                   ))}
                 </ul>
@@ -157,62 +191,42 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
 }
 
 function AssignmentRowItem({
-  courseId,
   assignment,
+  checked,
+  onToggle,
 }: {
-  courseId: string;
   assignment: AssignmentRow;
+  checked: boolean;
+  onToggle: () => void;
 }) {
-  const router = useRouter();
-  const [installPending, startInstall] = useTransition();
-  const [togglePending, startToggle] = useTransition();
   const isDiscussion = !!assignment.canvas_discussion_topic_id;
-  const submissionTypes = assignment.canvas_submission_types ?? [];
-  const canSubmit =
-    isDiscussion || submissionTypes.includes("online_text_entry");
+  const canInstall = !!assignment.canvas_assignment_id;
 
-  function flipInstall() {
-    const verb = assignment.installed ? "DELETE" : "POST";
-    startInstall(async () => {
-      try {
-        const res = await fetch(
-          `/api/teacher/assignments/${assignment.id}/install`,
-          { method: verb },
-        );
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || "Install failed");
-        }
-        toast.success(
-          assignment.installed
-            ? "Card removed from Canvas"
-            : "Card installed on Canvas",
-        );
-        router.refresh();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Install failed");
-      }
-    });
-  }
-
-  function flipToggle(next: boolean) {
-    startToggle(async () => {
-      try {
-        const res = await fetch(`/api/assignments/${assignment.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ canvas_submit_by_default: next }),
-        });
-        if (!res.ok) throw new Error();
-        router.refresh();
-      } catch {
-        toast.error("Failed to update assignment setting");
-      }
-    });
-  }
+  // Compact destination summary: D / C / S characters lit when active.
+  const destChars: { char: string; active: boolean; label: string }[] = [
+    { char: "D", active: assignment.post_to_drive, label: "Drive" },
+    {
+      char: "C",
+      active: assignment.post_to_canvas_comment,
+      label: "Canvas draft comment",
+    },
+    {
+      char: "S",
+      active: assignment.post_to_canvas_submission,
+      label: isDiscussion ? "Canvas discussion reply" : "Canvas submission",
+    },
+  ];
 
   return (
-    <li className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-stone-50">
+    <li className="flex items-center gap-3 px-4 py-2 hover:bg-stone-50">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onToggle}
+        disabled={!canInstall}
+        className="h-4 w-4 shrink-0"
+        title={canInstall ? "Select" : "No Canvas id — re-sync this course"}
+      />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-stone-900">
           {assignment.title}
@@ -226,53 +240,234 @@ function AssignmentRowItem({
               Discussion
             </Badge>
           )}
-          {assignment.installed && (
+          {assignment.installed ? (
             <Badge variant="secondary" className="text-[10px]">
               Card installed
             </Badge>
+          ) : (
+            <span className="text-stone-400">Not installed</span>
+          )}
+          {canInstall && (
+            <span
+              className="ml-1 inline-flex gap-0.5 font-mono text-[10px]"
+              title="D = Drive · C = Canvas draft comment · S = Canvas submission"
+            >
+              {destChars.map((d) => (
+                <span
+                  key={d.char}
+                  className={
+                    d.active
+                      ? "rounded bg-maroon/15 px-1 text-maroon"
+                      : "rounded bg-stone-100 px-1 text-stone-400"
+                  }
+                  title={`${d.label}: ${d.active ? "on" : "off"}`}
+                >
+                  {d.char}
+                </span>
+              ))}
+            </span>
           )}
         </div>
       </div>
-
-      <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-stone-600">
-        <input
-          type="checkbox"
-          checked={assignment.canvas_submit_by_default}
-          disabled={!canSubmit || togglePending}
-          onChange={(e) => flipToggle(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
-        />
-        {canSubmit
-          ? isDiscussion
-            ? "Auto-post"
-            : "Auto-submit"
-          : "Not supported"}
-      </label>
-
-      <Button
-        variant={assignment.installed ? "outline" : "default"}
-        size="sm"
-        onClick={flipInstall}
-        disabled={installPending || !assignment.canvas_assignment_id}
-        title={
-          assignment.canvas_assignment_id
-            ? undefined
-            : "Re-sync this course to populate Canvas IDs"
-        }
-      >
-        {installPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-        {assignment.installed ? "Uninstall" : "Install card"}
-      </Button>
-
-      <Link
-        href={`/teacher/courses/${courseId}/assignments/${assignment.id}/edit`}
-        className="inline-flex items-center gap-1 text-xs text-stone-600 hover:text-stone-900"
-      >
-        <Settings2 className="h-3.5 w-3.5" />
-        Configure
-      </Link>
     </li>
   );
+}
+
+function BulkActions({
+  courseId,
+  selectedIds,
+  selectedAssignments,
+  onClearSelection,
+}: {
+  courseId: string;
+  selectedIds: string[];
+  selectedAssignments: AssignmentRow[];
+  onClearSelection: () => void;
+}) {
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
+
+  // M6.18b defaults: Drive ✓ (locked-on), Submission ✓, Comment ✗. Initial
+  // state comes from the first selected assignment's saved destination so a
+  // teacher reinstalling sees what's currently on the row, not the defaults.
+  const first = selectedAssignments[0];
+  const [postToDrive, _setPostToDrive] = useState(true); // locked-on for HAH
+  const [postToComment, setPostToComment] = useState(
+    first?.post_to_canvas_comment ?? false,
+  );
+  const [postToSubmission, setPostToSubmission] = useState(
+    first?.post_to_canvas_submission ?? true,
+  );
+  // Avoid "unused setter" warning while keeping the symbol around for the
+  // future "unlock per-school admin override" path.
+  void _setPostToDrive;
+
+  const someInstalled = selectedAssignments.some((a) => a.installed);
+
+  function run(op: "install" | "uninstall") {
+    startTransition(async () => {
+      let result: BulkResult;
+      if (op === "install") {
+        result = await bulkInstallAssignments(courseId, selectedIds, {
+          drive: postToDrive,
+          comment: postToComment,
+          submission: postToSubmission,
+        });
+      } else {
+        if (
+          !window.confirm(
+            `Uninstall the card from ${selectedIds.length} assignment${selectedIds.length === 1 ? "" : "s"}?`,
+          )
+        )
+          return;
+        result = await bulkUninstallAssignments(courseId, selectedIds);
+      }
+      if (result.failureCount === 0) {
+        toast.success(
+          `${result.successCount} assignment${result.successCount === 1 ? "" : "s"} ${op === "install" ? "installed" : "uninstalled"}`,
+        );
+        onClearSelection();
+        router.refresh();
+      } else {
+        toast.error(
+          `${result.successCount} succeeded, ${result.failureCount} failed`,
+        );
+        router.refresh();
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="font-semibold text-stone-700">
+        {selectedIds.length} selected
+      </span>
+
+      <fieldset className="inline-flex items-center gap-3 text-stone-600">
+        <legend className="text-[11px] uppercase tracking-wide text-stone-500">
+          Transcript submitted to:
+        </legend>
+        <DestinationCheckbox
+          label="Drive"
+          checked={postToDrive}
+          onChange={() => {
+            /* locked-on for HAH */
+          }}
+          disabled={true}
+          title="Student transcripts always land in their own Drive folder — this is HAH's core feature and can't be turned off."
+        />
+        <DestinationCheckbox
+          label="Canvas as draft comment"
+          checked={postToComment}
+          onChange={setPostToComment}
+          disabled={pending}
+          title="Reserved — draft comment writer ships in a follow-up. Checkbox stores intent now so existing installs are ready when the writer goes live."
+        />
+        <DestinationCheckbox
+          label="Canvas as submission"
+          checked={postToSubmission}
+          onChange={setPostToSubmission}
+          disabled={pending}
+          title="Post the transcript as the student's submission body. For discussion topics this becomes a discussion reply."
+        />
+      </fieldset>
+
+      <button
+        type="button"
+        onClick={onClearSelection}
+        disabled={pending}
+        className="rounded-md px-2 py-1 text-stone-600 hover:bg-stone-100 disabled:opacity-50"
+      >
+        Cancel
+      </button>
+      {someInstalled && (
+        <button
+          type="button"
+          onClick={() => run("uninstall")}
+          disabled={pending}
+          className="rounded-md border border-stone-300 px-3 py-1 font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+        >
+          {pending ? "Working…" : "Uninstall"}
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => run("install")}
+        disabled={
+          pending ||
+          (!postToDrive && !postToComment && !postToSubmission)
+        }
+        className="rounded-md bg-maroon px-3 py-1 font-semibold text-white hover:bg-maroon/90 disabled:opacity-50"
+      >
+        {pending ? (
+          <>
+            <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+            Installing…
+          </>
+        ) : someInstalled ? (
+          "Reinstall"
+        ) : (
+          "Install card"
+        )}
+      </button>
+
+      <p className="basis-full text-[11px] italic text-stone-500">
+        {describeDestination({
+          drive: postToDrive,
+          comment: postToComment,
+          submission: postToSubmission,
+        })}
+      </p>
+    </div>
+  );
+}
+
+function DestinationCheckbox({
+  label,
+  checked,
+  onChange,
+  disabled,
+  title,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  disabled: boolean;
+  title: string;
+}) {
+  return (
+    <label className="inline-flex items-center gap-1.5" title={title}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        disabled={disabled}
+        className="h-3.5 w-3.5 rounded border-stone-300 accent-maroon disabled:opacity-50"
+      />
+      <span className="text-xs">{label}</span>
+    </label>
+  );
+}
+
+function describeDestination(d: {
+  drive: boolean;
+  comment: boolean;
+  submission: boolean;
+}): string {
+  const targets: string[] = [];
+  if (d.drive) targets.push("a Google Doc in the student's Drive folder");
+  if (d.comment) targets.push("a Canvas draft comment");
+  if (d.submission) targets.push("the student's Canvas submission body");
+  if (targets.length === 0) {
+    return "Nothing checked — transcript won't be saved anywhere. Pick at least one destination.";
+  }
+  if (targets.length === 1) {
+    return `Transcript will be saved to ${targets[0]}.`;
+  }
+  if (targets.length === 2) {
+    return `Transcript will be saved to ${targets[0]} and ${targets[1]}.`;
+  }
+  return `Transcript will be saved to ${targets[0]}, ${targets[1]}, and ${targets[2]}.`;
 }
 
 function Chevron({ open }: { open: boolean }) {
