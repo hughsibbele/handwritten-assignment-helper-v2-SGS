@@ -257,7 +257,7 @@ function AssignmentRowItem({
                   key={d.char}
                   className={
                     d.active
-                      ? "rounded bg-maroon/15 px-1 text-maroon"
+                      ? "rounded bg-primary/15 px-1 text-primary"
                       : "rounded bg-stone-100 px-1 text-stone-400"
                   }
                   title={`${d.label}: ${d.active ? "on" : "off"}`}
@@ -287,16 +287,21 @@ function BulkActions({
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  // M6.18b defaults: Drive ✓ (locked-on), Submission ✓, Comment ✗. Initial
-  // state comes from the first selected assignment's saved destination so a
-  // teacher reinstalling sees what's currently on the row, not the defaults.
+  // M6.18b defaults: Drive ✓ (locked-on), Submission ✓, Comment ✗. The
+  // first selected row's saved destination is honored ONLY when that row
+  // has actually been installed before — otherwise the bar shows the
+  // per-app defaults. (The migration's backfill from canvas_submit_by_default
+  // inherited "off" onto rows that were never installed, so those rows have
+  // post_to_canvas_submission=false in the DB even though the teacher never
+  // chose that — falling through to defaults gives the right initial state.)
   const first = selectedAssignments[0];
+  const useSaved = first?.installed ?? false;
   const [postToDrive, _setPostToDrive] = useState(true); // locked-on for HAH
   const [postToComment, setPostToComment] = useState(
-    first?.post_to_canvas_comment ?? false,
+    useSaved ? (first?.post_to_canvas_comment ?? false) : false,
   );
   const [postToSubmission, setPostToSubmission] = useState(
-    first?.post_to_canvas_submission ?? true,
+    useSaved ? (first?.post_to_canvas_submission ?? true) : true,
   );
   // Avoid "unused setter" warning while keeping the symbol around for the
   // future "unlock per-school admin override" path.
@@ -397,7 +402,7 @@ function BulkActions({
           pending ||
           (!postToDrive && !postToComment && !postToSubmission)
         }
-        className="rounded-md bg-maroon px-3 py-1 font-semibold text-white hover:bg-maroon/90 disabled:opacity-50"
+        className="rounded-md bg-primary px-3 py-1 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {pending ? (
           <>
@@ -442,7 +447,7 @@ function DestinationCheckbox({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
-        className="h-3.5 w-3.5 rounded border-stone-300 accent-maroon disabled:opacity-50"
+        className="h-3.5 w-3.5 rounded border-stone-300 accent-primary disabled:opacity-50"
       />
       <span className="text-xs">{label}</span>
     </label>
