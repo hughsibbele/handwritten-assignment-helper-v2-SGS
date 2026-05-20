@@ -107,9 +107,17 @@ export class CanvasClient {
   }
 
   async getStudents(courseId: number): Promise<CanvasUser[]> {
+    // Canvas's documented form is `include[]=email`; bare `include=email`
+    // is silently ignored on some Canvas installs, causing user.email to
+    // come back undefined and the caller to fall back to login_id (which
+    // gets stored as a fake email — see students.email upsert below).
     return this.fetchPaginated<CanvasUser>(
       `/api/v1/courses/${courseId}/users`,
-      { "enrollment_type[]": "student", include: "email" }
+      {
+        "enrollment_type[]": "student",
+        "enrollment_state[]": "active",
+        "include[]": "email",
+      }
     );
   }
 

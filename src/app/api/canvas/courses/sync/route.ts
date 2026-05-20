@@ -108,15 +108,26 @@ export async function POST(request: Request) {
         );
       }
 
-      // Sync students
+      // Sync students. Canvas's /users?include[]=email is the only path
+      // that reliably surfaces real student emails to a teacher-scope
+      // token. The old fallback `email ?? login_id ?? null` silently
+      // stored short identifier strings like "jsmith23" in the email
+      // slot when Canvas hid the email field; those never matched the
+      // student's Google-OAuth identity at sign-in. Reject rows where
+      // the resolved value still isn't email-shaped rather than storing
+      // fake emails. Discovered in OE 2026-05-20.
       const canvasStudents = await canvas.getStudents(cc.id);
       for (const cs of canvasStudents) {
+        const rawEmail = (cs.email ?? "").trim().toLowerCase();
+        if (!rawEmail || !rawEmail.includes("@")) {
+          continue;
+        }
         const { data: student } = await admin
           .from("students")
           .upsert(
             {
               canvas_user_id: cs.id,
-              email: cs.email ?? cs.login_id ?? null,
+              email: rawEmail,
               display_name: cs.name,
             },
             { onConflict: "canvas_user_id", ignoreDuplicates: false }
