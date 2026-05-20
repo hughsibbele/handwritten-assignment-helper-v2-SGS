@@ -7,6 +7,7 @@ import {
   removeCardBlock,
   replaceOrAppendCardBlock,
 } from "@/lib/canvas/install";
+import { resolveCardTextForTeacher } from "@/lib/card-text/resolve";
 
 // POST  /api/teacher/assignments/<id>/install  → install the card
 // DELETE /api/teacher/assignments/<id>/install  → uninstall the card
@@ -96,10 +97,16 @@ export async function POST(_request: Request, { params }: Ctx) {
     );
   }
 
+  // Pull effective per-teacher card text (M6.15). Falls all the way back
+  // to DEFAULT_HANDWRITTEN_CARD_TEXT inside the resolver if the defaults
+  // row is somehow missing.
+  const cardText = await resolveCardTextForTeacher(ctx.teacher.id);
+
   const cardBlock = buildHandwrittenCardBlock({
     appBaseUrl: ctx.appBaseUrl,
     courseId: ctx.assignment.courseId,
     assignmentId: ctx.assignment.id,
+    text: cardText,
   });
 
   const nextDescription = replaceOrAppendCardBlock(

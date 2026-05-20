@@ -26,6 +26,11 @@ export default async function AdminLayout({
               Prompts
             </Button>
           </Link>
+          <Link href="/admin/card-text">
+            <Button variant="ghost" size="sm">
+              Card text
+            </Button>
+          </Link>
           <Link href="/admin/retention">
             <Button variant="ghost" size="sm">
               Retention
