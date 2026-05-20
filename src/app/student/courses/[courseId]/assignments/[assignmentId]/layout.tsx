@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 
 // Server-side gate for student upload pages reached via the Canvas card.
 // Verifies (a) signed-in, (b) we have a `students` row for this email, and
