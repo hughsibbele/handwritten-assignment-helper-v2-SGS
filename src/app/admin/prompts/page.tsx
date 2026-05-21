@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PromptEditor } from "@/components/admin/prompt-editor";
+import { AutoSaveProvider } from "@/components/auto-save/context";
 
 type PromptRow = {
   id: string;
@@ -46,7 +47,11 @@ export default async function AdminPromptsPage() {
           </CardContent>
         </Card>
       ) : (
-        prompts.map((p) => <PromptEditor key={p.id} prompt={p} />)
+        <AutoSaveProvider>
+          {prompts.map((p) => (
+            <PromptEditor key={p.id} prompt={p} />
+          ))}
+        </AutoSaveProvider>
       )}
     </div>
   );
