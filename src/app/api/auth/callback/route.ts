@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptSecret } from "@/lib/crypto/secret";
 
 // Phase 0b of REMEDIATION_PLAN.md — restrict the post-callback redirect
 // target to relative same-origin paths. The previous behavior accepted
@@ -91,19 +92,40 @@ export async function GET(request: Request) {
           }
         }
 
-        // Save Google tokens (only when provider returns them)
+        // Save Google tokens (only when provider returns them). Phase 0c:
+        // tokens are AES-256-GCM-encrypted at rest. The encryption throws
+        // if STUDENT_GDRIVE_TOKEN_ENC_KEY is unset — that's intentional;
+        // silently falling back to plaintext re-opens the at-rest leak.
+        // The session itself still completes so the user lands signed-in;
+        // they just can't write to Drive until the operator sets the env.
         if (studentId && providerToken) {
-          await admin
-            .from("students")
-            .update({
-              google_access_token: providerToken,
-              google_refresh_token: providerRefreshToken ?? undefined,
-              google_token_expires_at: new Date(
-                Date.now() + 3600 * 1000
-              ).toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", studentId);
+          try {
+            const accessEnc = encryptSecret(providerToken);
+            const refreshEnc = providerRefreshToken
+              ? encryptSecret(providerRefreshToken)
+              : null;
+            await admin
+              .from("students")
+              .update({
+                google_access_token_encrypted: accessEnc,
+                google_refresh_token_encrypted: refreshEnc,
+                // Plaintext columns intentionally NOT written. Legacy rows
+                // keep their plaintext until the backfill script + drop-
+                // plaintext follow-up migration land.
+                google_access_token: null,
+                google_refresh_token: null,
+                google_token_expires_at: new Date(
+                  Date.now() + 3600 * 1000
+                ).toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", studentId);
+          } catch (err) {
+            console.error(
+              "[auth/callback] Google token encryption failed — student will be unable to write to Drive until env var is set",
+              err,
+            );
+          }
         }
       }
 
