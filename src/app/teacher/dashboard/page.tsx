@@ -12,6 +12,7 @@ import type {
   AssignmentRow,
   CourseGroup,
 } from "./dashboard.types";
+import { bulkSuperGraderScope } from "@/lib/super-grader/scope";
 
 export default async function TeacherDashboard() {
   const supabase = await createServerSupabase();
@@ -112,6 +113,7 @@ export default async function TeacherDashboard() {
         canvas_submission_types: a.canvas_submission_types,
         canvas_discussion_topic_id: a.canvas_discussion_topic_id,
         installed: installedSet.has(a.id),
+        inSuperGraderScope: false, // populated post-map via bulk lookup
       }));
     return {
       id: c.id,
@@ -131,6 +133,23 @@ export default async function TeacherDashboard() {
   // dropping the filter.
   const activeGroups = groups.filter((g) => termIsCurrent(g.term));
   const hiddenCount = groups.length - activeGroups.length;
+
+  // Ask super-grader which assignments it's tracking. Bulk lookup with
+  // 5-min cache + fail-open per call. Only check active-term assignments
+  // (those are the ones actually rendered).
+  const sgScopeIds = activeGroups
+    .flatMap((g) => g.assignments)
+    .map((a) => a.canvas_assignment_id)
+    .filter((id): id is number => id != null);
+  const sgScopeMap = await bulkSuperGraderScope(sgScopeIds);
+  for (const group of activeGroups) {
+    for (const a of group.assignments) {
+      if (a.canvas_assignment_id != null) {
+        a.inSuperGraderScope =
+          sgScopeMap.get(String(a.canvas_assignment_id))?.in_scope ?? false;
+      }
+    }
+  }
 
   // BackgroundSync expects the raw shape it's always taken.
   const syncCandidates = activeGroups.map((g) => ({

@@ -11,6 +11,10 @@ export type AssignmentRow = {
   canvas_submission_types: string[] | null;
   canvas_discussion_topic_id: number | null;
   installed: boolean;
+  /** True when super-grader is tracking this Canvas assignment. When true,
+   *  HAH still writes to Drive but skips its own Canvas-submit path —
+   *  super-grader owns the final Canvas post. */
+  inSuperGraderScope: boolean;
 };
 
 export type CourseGroup = {

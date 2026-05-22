@@ -247,6 +247,14 @@ function AssignmentRowItem({
           ) : (
             <span className="text-stone-400">Not installed</span>
           )}
+          {assignment.inSuperGraderScope && (
+            <Badge
+              className="bg-[#7a1e46] text-[10px] text-white hover:bg-[#7a1e46]"
+              title="This assignment is tracked in super-grader. HAH still writes to Drive, but skips its own Canvas submit — super-grader owns the final post."
+            >
+              ↗ super-grader
+            </Badge>
+          )}
           {canInstall && (
             <span
               className="ml-1 inline-flex gap-0.5 font-mono text-[10px]"

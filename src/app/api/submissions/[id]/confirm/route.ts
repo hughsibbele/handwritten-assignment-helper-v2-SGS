@@ -7,6 +7,7 @@ import { getOrCreateCourseFolder } from "@/lib/google/drive";
 import { CanvasClient } from "@/lib/canvas/client";
 import { anonToken } from "@/lib/anonymizer/token";
 import { pushToSuperGrader } from "@/lib/peers/notify";
+import { isAssignmentInSuperGraderScope } from "@/lib/super-grader/scope";
 import { z } from "zod";
 
 /** Convert plain text to simple HTML paragraphs for Canvas. */
@@ -206,10 +207,25 @@ export async function POST(
     );
   }
 
+  // If super-grader is tracking this assignment, SG owns the Canvas post —
+  // skip our own. Drive write above already ran (student-Drive ownership
+  // is core to HAH; doesn't change with SG-scope). Fail-open: any lookup
+  // error keeps us on the normal Canvas path so a transient SG outage
+  // doesn't silently suppress student submissions.
+  const sgScope = await isAssignmentInSuperGraderScope(
+    assignment.canvas_assignment_id,
+  );
+  const routedViaSuperGrader = sgScope.in_scope;
+  if (routedViaSuperGrader && parsed.data.submitToCanvas) {
+    warnings.push(
+      "This assignment is routed via super-grader — Canvas submission skipped here; your teacher will post the final version from super-grader.",
+    );
+  }
+
   // Canvas submission (independent of Google Doc — uses transcription text directly)
   let canvasSubmitted = false;
   let canvasSubmissionUrl: string | null = null;
-  if (parsed.data.submitToCanvas) {
+  if (parsed.data.submitToCanvas && !routedViaSuperGrader) {
     try {
       const teacher = assignment.courses.teachers;
       if (!teacher.canvas_base_url || !teacher.canvas_api_token) {
