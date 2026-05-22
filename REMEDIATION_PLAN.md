@@ -33,6 +33,59 @@ Active-bleed phases 0 / 0b / 0c shipped 2026-05-21. The structural critical path
 | 0 — Stop the active bleeds (PII + open endpoint) | Done | HAH `02f41c9` |
 | 0b — Auth boundary criticals (teacher allowlist + students INSERT policy + filter injection + timingSafeEqual + open-redirect) | Done | HAH `e653daa` + migration `025` |
 | 0c — Encrypt Google OAuth tokens at rest | Done | HAH `9a267bd` + migration `026` |
+
+## Operator follow-ups (deploy checklist for Phase 0 / 0b / 0c)
+
+These items must complete BEFORE or SHORTLY AFTER the Phase 0/0b/0c commits deploy to production. None of them are blocking on more code from this repo — they're operator actions and tracking items.
+
+### Required before deploying Phase 0c to production
+
+1. **Generate + set `STUDENT_GDRIVE_TOKEN_ENC_KEY`.**
+   ```
+   openssl rand -base64 32
+   ```
+   Add to Vercel env vars (production + preview + development scopes — see global CLAUDE.md for the per-scope add-via-CLI gotchas) and to local `.env.local`. Without this, every new student sign-in's Google-token write logs an encryption error and the student can't write to Drive. Reads continue to work (fall back to legacy plaintext columns).
+
+2. **Run a one-off backfill** to encrypt every existing student's plaintext tokens. Trivial Node script (~20 lines): read each `students` row with non-null `google_access_token` OR `google_refresh_token`; `encryptSecret()` both; write the `*_encrypted` columns; null the plaintext columns. Idempotent — safe to re-run. Recommended:
+   ```
+   node scripts/backfill-gdrive-tokens.js  # tracked as a TODO; write this script first
+   ```
+   Verify via SQL: `SELECT count(*) FROM students WHERE google_access_token IS NOT NULL OR google_refresh_token IS NOT NULL;` should hit 0 after the backfill.
+
+3. **Ship a follow-up migration dropping the legacy plaintext columns** once #2 confirms clean. Migration `027_drop_legacy_gdrive_token_columns.sql`:
+   ```sql
+   ALTER TABLE public.students
+     DROP COLUMN google_access_token,
+     DROP COLUMN google_refresh_token;
+   ```
+   Then remove the legacy-column fallback in `src/lib/google/auth.ts` (the `?? row.google_access_token` branch). Migration + code change in one PR.
+
+### Required shortly after deploying Phase 0b
+
+4. **Audit + populate `teachers_allowlist`.** The migration seeded the table from existing `teachers.email`, so today's teachers aren't locked out. But there's no admin UI for it yet (M6.22+ may add one). For now, new teachers need a direct SQL row insert by an admin:
+   ```sql
+   INSERT INTO teachers_allowlist (email, added_by_email)
+   VALUES ('newteacher@episcopalhighschool.org', 'hkoeze@episcopalhighschool.org');
+   ```
+   Sanity-check post-migration: `SELECT email FROM teachers WHERE lower(email) NOT IN (SELECT email FROM teachers_allowlist);` should return zero rows (else the backfill missed someone).
+
+### Required after EVERY Vercel deploy that touches Inngest functions
+
+5. **PUT `/api/inngest` to re-sync Inngest registration.** Suite-wide gotcha (`feedback_inngest-resync-after-vercel-rename.md`) — events 200 silently but never fire until re-synced.
+   ```
+   curl -s -X PUT https://<host>/api/inngest
+   ```
+   Response `{"modified":true}` = registration was stale and is now fresh. `{"modified":false}` = nothing was wrong. The Phase 0 commit modified `transcribe-photo` substantially — definitely re-sync after that deploys.
+
+### Outstanding follow-ups (no urgency, tracked here so they don't drift)
+
+6. **De-anonymize for Canvas + Drive write paths.** Phase 0 introduced a known user-visible regression: in the rare cases where OCR'd body text contains classmate names, Canvas SpeedGrader comments + Google Doc bodies now show `Student_xxxxxx` tokens instead of real names. The OCR system prompt already instructs Gemini to skip header rows, so this is uncommon — but per the suite contract ("Canvas writes are de-anonymized — Canvas is on EHS's side of the privacy boundary"), we should wire a de-anonymizer into the confirm path. Mirrors AID's eventual `deAnonymize` wiring. **Recommended scope:** add `buildDeAnonymizer(roster)` to `src/lib/anonymizer/scrub.ts`; in `submissions/[id]/confirm/route.ts`, load the roster + de-anon the `transcription_text` before the Canvas comment / Drive doc body write. Folds naturally into Phase 5 (destination picker wiring) since both touch confirm.
+
+7. **Write the backfill script** referenced in #2 above. Should live at `scripts/backfill-gdrive-tokens.js` (project-root scripts, not the suite-root ones). Trivial — ~20 lines. Block before #3 (column drop).
+
+### Tracking
+
+This section gets pruned as items complete. Once an item ships, move it to the Phase 0/0b/0c "Done" entries above with the relevant commit ref + delete from this list.
 | 1 — Snapshot semantics on submission start | Pending | — |
 | 2 — State fences + idempotent confirm / Inngest / photo upload | Pending | — |
 | 3 — Stale-session sweep + retention cron | Pending | — |
