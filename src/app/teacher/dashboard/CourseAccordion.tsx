@@ -317,14 +317,26 @@ function BulkActions({
 
   const someInstalled = selectedAssignments.some((a) => a.installed);
 
+  // M3.8 / M6.18b: when every selected assignment is in super-grader's
+  // scope, SG owns the Canvas write — disable the Canvas checkboxes to
+  // mirror what HAH actually does at confirm time. Drive stays on (and
+  // remains locked-on per HAH's M6.18 spec).
+  const allInSuperGraderScope =
+    selectedAssignments.length > 0 &&
+    selectedAssignments.every((a) => a.inSuperGraderScope);
+  const someInSuperGraderScope =
+    selectedAssignments.some((a) => a.inSuperGraderScope);
+  const effectiveComment = allInSuperGraderScope ? false : postToComment;
+  const effectiveSubmission = allInSuperGraderScope ? false : postToSubmission;
+
   function run(op: "install" | "uninstall") {
     startTransition(async () => {
       let result: BulkResult;
       if (op === "install") {
         result = await bulkInstallAssignments(courseId, selectedIds, {
           drive: postToDrive,
-          comment: postToComment,
-          submission: postToSubmission,
+          comment: effectiveComment,
+          submission: effectiveSubmission,
         });
       } else {
         if (
@@ -371,17 +383,25 @@ function BulkActions({
         />
         <DestinationCheckbox
           label="Canvas as draft comment"
-          checked={postToComment}
+          checked={effectiveComment}
           onChange={setPostToComment}
-          disabled={pending}
-          title="Reserved — draft comment writer ships in a follow-up. Checkbox stores intent now so existing installs are ready when the writer goes live."
+          disabled={pending || allInSuperGraderScope}
+          title={
+            allInSuperGraderScope
+              ? "Routed via super-grader — SG owns the final Canvas post; HAH will skip this write."
+              : "Reserved — draft comment writer ships in a follow-up. Checkbox stores intent now so existing installs are ready when the writer goes live."
+          }
         />
         <DestinationCheckbox
           label="Canvas as submission"
-          checked={postToSubmission}
+          checked={effectiveSubmission}
           onChange={setPostToSubmission}
-          disabled={pending}
-          title="Post the transcript as the student's submission body. For discussion topics this becomes a discussion reply."
+          disabled={pending || allInSuperGraderScope}
+          title={
+            allInSuperGraderScope
+              ? "Routed via super-grader — SG owns the final Canvas post; HAH will skip this write."
+              : "Post the transcript as the student's submission body. For discussion topics this becomes a discussion reply."
+          }
         />
       </fieldset>
 
@@ -427,9 +447,19 @@ function BulkActions({
       <p className="basis-full text-[11px] italic text-stone-500">
         {describeDestination({
           drive: postToDrive,
-          comment: postToComment,
-          submission: postToSubmission,
+          comment: effectiveComment,
+          submission: effectiveSubmission,
         })}
+        {allInSuperGraderScope && (
+          <span className="ml-1 not-italic text-[#7a1e46]">
+            · routed via super-grader (Canvas write suppressed; Drive still happens)
+          </span>
+        )}
+        {!allInSuperGraderScope && someInSuperGraderScope && (
+          <span className="ml-1 not-italic text-amber-700">
+            · mixed scope — only some selected are in super-grader; review per-row
+          </span>
+        )}
       </p>
     </div>
   );
