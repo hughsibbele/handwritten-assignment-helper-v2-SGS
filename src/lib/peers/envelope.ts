@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { anonToken } from "@/lib/anonymizer/token";
-import { getCourseScrubber } from "@/lib/anonymizer/roster";
+import {
+  getCourseScrubber,
+  RosterMissingError,
+} from "@/lib/anonymizer/roster";
 import type { HandwrittenEnvelope } from "./types";
 
 type SubmissionRow = {
@@ -26,10 +29,15 @@ type SubmissionRow = {
  * pair. Returns null when no confirmed submission exists — the caller turns
  * that into a 404 (GET endpoint) or a skip (outbound webhook).
  *
- * Transcript fields are roster-scrubbed before they leave the boundary. The
- * stored `transcription_text` keeps the student's real name intact (it's
- * their own work shown back to them); only what we hand to super-grader
- * gets anonymized.
+ * Transcript fields are roster-scrubbed before they leave the boundary.
+ *
+ * Phase 0 of REMEDIATION_PLAN.md: the OCR worker now scrubs at storage
+ * time, so the stored `transcription_text` is already tokenized for any
+ * row inserted after Phase 0 shipped. For legacy rows (pre-Phase-0) this
+ * scrub call cleans them on egress. Either way, `getCourseScrubber` is
+ * fail-closed — `RosterMissingError` bubbles up and the envelope is
+ * refused (caller turns into 503 / dropped webhook) rather than shipping
+ * raw text to super-grader.
  */
 export async function buildEnvelopeForCanvasIds(
   canvasUserId: number,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkSuperGraderBearer } from "@/lib/peers/auth";
 import { buildEnvelopeForCanvasIds } from "@/lib/peers/envelope";
+import { RosterMissingError } from "@/lib/anonymizer/roster";
 
 export async function GET(request: Request) {
   const authFail = checkSuperGraderBearer(request);
@@ -24,10 +25,27 @@ export async function GET(request: Request) {
     );
   }
 
-  const envelope = await buildEnvelopeForCanvasIds(
-    canvasUserId,
-    canvasAssignmentId,
-  );
+  // Phase 0 fail-closed: if the course roster isn't usable, we refuse to
+  // ship raw transcript text. Return 503 so super-grader retries instead
+  // of caching a no-data response.
+  let envelope;
+  try {
+    envelope = await buildEnvelopeForCanvasIds(
+      canvasUserId,
+      canvasAssignmentId,
+    );
+  } catch (err) {
+    if (err instanceof RosterMissingError) {
+      console.warn(
+        `[super-grader/result] roster_missing canvas_user=${canvasUserId} canvas_assignment=${canvasAssignmentId} reason=${err.reason}`,
+      );
+      return NextResponse.json(
+        { error: "roster_missing", message: err.reason },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!envelope) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

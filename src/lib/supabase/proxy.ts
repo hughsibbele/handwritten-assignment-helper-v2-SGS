@@ -33,13 +33,17 @@ export async function updateSession(request: NextRequest) {
 
   // Allow auth routes, public routes, and system-to-system endpoints (the
   // /api/super-grader/* GETs are bearer-auth'd at the route, not via session).
+  //
+  // Phase 0 of REMEDIATION_PLAN.md: the previous `/test-` + `/api/test-`
+  // allow-list entries were removed alongside the deletion of
+  // /api/test-transcribe — an unauthenticated public Gemini-spend endpoint.
+  // Do NOT re-add prefix allow-lists for ad-hoc dev surfaces; gate them
+  // behind /api/admin/* (which already requires isAdmin() per route).
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/inngest") ||
     pathname.startsWith("/api/super-grader") ||
-    pathname.startsWith("/test-") ||
-    pathname.startsWith("/api/test-") ||
     pathname === "/"
   ) {
     return supabaseResponse;

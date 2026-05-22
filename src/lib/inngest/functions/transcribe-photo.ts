@@ -3,6 +3,10 @@ import { inngest } from "../client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { transcribeImage } from "@/lib/gemini/transcribe";
 import { checkAndIncrementGeminiCall } from "@/lib/gemini/rate-limit";
+import {
+  getScrubberForSubmission,
+  RosterMissingError,
+} from "@/lib/anonymizer/roster";
 
 export const transcribePhoto = inngest.createFunction(
   {
@@ -110,7 +114,49 @@ export const transcribePhoto = inngest.createFunction(
       return await transcribeImage(imageData.base64, imageData.mimeType);
     });
 
-    // Step 4: Save transcription
+    // Step 3b: Phase 0 fail-closed PII scrub. Gemini may transcribe a
+    // student's name from a header (the OCR prompt asks it to skip, but
+    // there's no hard guarantee) or transcribe classmate names mentioned
+    // in the body. We scrub the OCR output against the course roster
+    // BEFORE writing to DB so submission_photos.raw_transcription and
+    // submissions.transcription_text are tokenized at rest.
+    //
+    // RosterMissingError = course roster isn't synced OR salt is unset.
+    // We refuse to land the text and mark the photo failed — exactly the
+    // OE/AID Phase 0 contract.
+    const scrubOutcome = await step.run("scrub-output", async () => {
+      try {
+        const scrub = await getScrubberForSubmission(submissionId);
+        return { ok: true as const, text: scrub(transcription) };
+      } catch (err) {
+        if (err instanceof RosterMissingError) {
+          console.warn(
+            `[transcribe-photo] roster_missing submission=${submissionId} photo=${photoId} reason=${err.reason}`,
+          );
+          return { ok: false as const, reason: "roster_missing" as const };
+        }
+        throw err;
+      }
+    });
+
+    if (!scrubOutcome.ok) {
+      const supabase = createAdminClient();
+      await supabase
+        .from("submission_photos")
+        .update({
+          status: "failed",
+          processing_completed_at: new Date().toISOString(),
+        })
+        .eq("id", photoId);
+      return {
+        success: false,
+        photoId,
+        reason: scrubOutcome.reason,
+      };
+    }
+    const scrubbedTranscription = scrubOutcome.text;
+
+    // Step 4: Save (scrubbed) transcription
     const savedOk = await step.run("save-transcription", async () => {
       const supabase = createAdminClient();
       const { data: photo } = await supabase
@@ -122,7 +168,7 @@ export const transcribePhoto = inngest.createFunction(
       await supabase
         .from("submission_photos")
         .update({
-          raw_transcription: transcription,
+          raw_transcription: scrubbedTranscription,
           status: "completed",
           processing_completed_at: new Date().toISOString(),
         })
