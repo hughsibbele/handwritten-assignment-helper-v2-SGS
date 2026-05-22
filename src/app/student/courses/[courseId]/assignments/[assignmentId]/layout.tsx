@@ -47,13 +47,29 @@ export default async function StudentAssignmentLayout({
   // students start with NULL auth_user_id; the auth callback links them
   // on first sign-in). Looking up by auth_user_id alone misses freshly
   // synced rows.
+  //
+  // Phase 0b of REMEDIATION_PLAN.md: previously this used PostgREST .or()
+  // with the email interpolated as a string — a comma in a quoted local-
+  // part spliced extra OR predicates and could match any student. We now
+  // run two narrow lookups and union client-side (.eq is parameter-safe,
+  // no string interpolation into the filter language).
   const admin = createAdminClient();
 
-  const { data: student } = await admin
+  const byAuthIdPromise = admin
     .from("students")
     .select("id")
-    .or(`auth_user_id.eq.${user.id},email.eq.${user.email}`)
+    .eq("auth_user_id", user.id)
     .maybeSingle();
+  const byEmailPromise = admin
+    .from("students")
+    .select("id")
+    .eq("email", user.email)
+    .maybeSingle();
+  const [byAuthId, byEmail] = await Promise.all([
+    byAuthIdPromise,
+    byEmailPromise,
+  ]);
+  const student = byAuthId.data ?? byEmail.data;
 
   if (!student) {
     return (
