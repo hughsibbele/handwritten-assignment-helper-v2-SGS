@@ -26,13 +26,13 @@ The audits also identified the same five recurring root causes as the OE + AID r
 
 ## Status (as of 2026-05-21)
 
-All phases pending. The critical path is **0 → 1 → 2 → 3**, mirroring OE M6.19 and AID M6.20. Phase 0 is materially larger than in the prior two campaigns because of the actively-leaking criticals.
+Active-bleed phases 0 / 0b / 0c shipped 2026-05-21. The structural critical path is **1 → 2 → 3**, mirroring OE M6.19 and AID M6.20.
 
 | Phase | State | Commit |
 |---|---|---|
-| 0 — Stop the active bleeds (PII + open endpoint + roster repoison) | Pending | — |
-| 0b — Auth boundary criticals (teacher self-promote + students INSERT policy + filter injection + timingSafeEqual) | Pending | — |
-| 0c — Encrypt Google OAuth tokens at rest | Pending | — |
+| 0 — Stop the active bleeds (PII + open endpoint) | Done | HAH `02f41c9` |
+| 0b — Auth boundary criticals (teacher allowlist + students INSERT policy + filter injection + timingSafeEqual + open-redirect) | Done | HAH `e653daa` + migration `025` |
+| 0c — Encrypt Google OAuth tokens at rest | Done | HAH `9a267bd` + migration `026` |
 | 1 — Snapshot semantics on submission start | Pending | — |
 | 2 — State fences + idempotent confirm / Inngest / photo upload | Pending | — |
 | 3 — Stale-session sweep + retention cron | Pending | — |
