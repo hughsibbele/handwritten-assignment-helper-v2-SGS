@@ -56,7 +56,7 @@ Web app for Episcopal High School students to upload photos of handwritten work,
 - The new Supabase key format (`sb_publishable_` / `sb_secret_`) works for auth but does NOT work with the Supabase REST API directly (expects JWT). The SDK handles it fine.
 
 ## Admin client usage
-RLS recursion was fixed via SECURITY DEFINER helper functions (migrations 015-016). Most API routes now use the user's Supabase client with RLS. `createAdminClient()` is still used where genuinely needed:
+RLS recursion was fixed via SECURITY DEFINER helper functions (migrations 015-016). Most API routes now use the user's Supabase client with RLS. `createAdminDbClient()` (renamed from `createAdminClient` 2026-05-22 / M4.13) is still used where genuinely needed:
 - **Inngest background jobs** — no user session/auth cookies (includes the rate-limit RPC call)
 - **Auth callback** — must find students with NULL `auth_user_id`
 - **Canvas sync routes** — bulk upserts creating records for other students
