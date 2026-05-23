@@ -76,6 +76,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: test.error }, { status: 400 });
   }
 
+  // M4.11b: persist google_sub on first-time teacher row create. The
+  // claim is stable across email renames; useful for account
+  // reconciliation. `auth.user.identities` carries the Google identity
+  // when the user signed in via Google OAuth.
+  const googleIdentity = user.identities?.find((i) => i.provider === "google");
+  const googleSub =
+    (googleIdentity?.identity_data?.sub as string | undefined) ?? null;
+
   // Upsert teacher record
   const { error } = await supabase.from("teachers").upsert(
     {
@@ -85,6 +93,7 @@ export async function POST(request: Request) {
         user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Teacher",
       canvas_base_url: canvasBaseUrl,
       canvas_api_token: canvasApiToken,
+      google_sub: googleSub,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "auth_user_id" }

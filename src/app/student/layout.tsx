@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { getServerDbClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 
@@ -8,6 +8,10 @@ export default async function StudentLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Don't use getCurrentStudent() here — a freshly-signed-in EHS user
+  // who hasn't been roster-synced has no students row yet, and the
+  // join-via-class-code flow on /student/dashboard is what creates one.
+  // Just require a session.
   const supabase = await getServerDbClient();
   const {
     data: { user },

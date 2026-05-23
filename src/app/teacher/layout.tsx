@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getServerDbClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/auth/admin";
+import { getCurrentTeacher } from "@/lib/auth/teacher";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 
@@ -10,22 +10,11 @@ export default async function TeacherLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await getServerDbClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  // Verify teacher role. The /teacher/setup carve-out lives in the proxy;
-  // anyone past it without a teacher row got redirected before we got here.
-  const { data: teacher } = await supabase
-    .from("teachers")
-    .select("id")
-    .eq("auth_user_id", user.id)
-    .single();
+  // Verify teacher role via the shared helper (M4.11c). Returns null when
+  // the signed-in user isn't a teacher; we redirect them to the student
+  // dashboard. The /teacher/setup carve-out lives in the proxy; anyone
+  // past it without a teacher row got redirected before we got here.
+  const teacher = await getCurrentTeacher();
 
   if (!teacher) {
     redirect("/student/dashboard");
@@ -62,7 +51,7 @@ export default async function TeacherLayout({
               </Link>
             )}
             <span className="hidden text-xs italic text-cool-gray sm:inline">
-              {user.email ?? ""}
+              {teacher.email}
             </span>
             <SignOutButton />
           </nav>

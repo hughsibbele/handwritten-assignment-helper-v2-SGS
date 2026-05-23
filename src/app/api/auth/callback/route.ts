@@ -3,6 +3,12 @@ import { getServerDbClient } from "@/lib/supabase/server";
 import { createAdminDbClient } from "@/lib/supabase/admin";
 import { encryptSecret } from "@/lib/crypto/secret";
 
+// EHS Workspace domain gate (M4.11a). AID/OE enforce this via the
+// callback; HAH didn't before 2026-05-22. Belt-and-suspenders on top of
+// Google's `hd` OAuth param hint (which is client-side advisory and can
+// be bypassed by sufficiently determined users).
+const ALLOWED_DOMAIN = "episcopalhighschool.org";
+
 // Phase 0b of REMEDIATION_PLAN.md — restrict the post-callback redirect
 // target to relative same-origin paths. The previous behavior accepted
 // anything in `next` and would happily redirect to `//evil.com` (browsers
@@ -28,6 +34,27 @@ export async function GET(request: Request) {
       const userEmail = data.session.user.email;
       const providerToken = data.session.provider_token;
       const providerRefreshToken = data.session.provider_refresh_token;
+
+      // M4.11a: hard-reject any non-EHS Workspace account. The
+      // signOut() clears the cookie so the user doesn't get past the
+      // proxy on the next navigation.
+      const emailLower = userEmail?.toLowerCase() ?? "";
+      if (!emailLower.endsWith(`@${ALLOWED_DOMAIN}`)) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(
+          `${origin}/login?error=domain_not_allowed`,
+        );
+      }
+
+      // M4.11b: extract the Google OAuth subject claim — stable across
+      // EHS email renames, so it's the durable identifier for account
+      // reconciliation. Persisted onto whichever role's row we touch
+      // below.
+      const googleIdentity = data.session.user.identities?.find(
+        (i) => i.provider === "google",
+      );
+      const googleSub =
+        (googleIdentity?.identity_data?.sub as string | undefined) ?? null;
 
       if (userEmail) {
         // Admin client required: must find students with NULL auth_user_id (RLS can't match)
@@ -59,9 +86,22 @@ export async function GET(request: Request) {
                 .from("students")
                 .update({
                   auth_user_id: userId,
+                  google_sub: googleSub,
                   updated_at: new Date().toISOString(),
                 })
                 .eq("id", studentId);
+            } else if (googleSub) {
+              // Already linked — only refresh google_sub if we have one
+              // and the column is null (don't clobber an existing value
+              // — sub should be stable).
+              await admin
+                .from("students")
+                .update({
+                  google_sub: googleSub,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", studentId)
+                .is("google_sub", null);
             }
           }
         }
@@ -85,6 +125,7 @@ export async function GET(request: Request) {
                 auth_user_id: userId,
                 email: userEmail,
                 display_name: displayName,
+                google_sub: googleSub,
               })
               .select("id")
               .single();
