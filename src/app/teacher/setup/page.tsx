@@ -14,13 +14,29 @@ import {
 } from "@/lib/card-text/resolve";
 import { CanvasConnectionSection } from "./CanvasConnectionSection";
 import { CardTextEditor } from "./CardTextEditor";
+import { CoursePickerSection } from "./CoursePickerSection";
 
+/**
+ * Canonical setup surface (M4.11d, 2026-05-22). Replaces the legacy
+ * top-level /setup wizard so first-time onboarding and ongoing settings
+ * live in one place. The page is tolerant of three states:
+ *
+ *   - No teacher row yet (brand-new EHS user): only the Canvas
+ *     connection section is shown. Saving the connection promotes the
+ *     user to a teacher; the page re-renders with the rest of the
+ *     sections.
+ *   - Teacher row + no courses synced: Canvas connection (with green
+ *     checkmark) + course picker wizard.
+ *   - Teacher row + courses synced: Canvas connection + card-text
+ *     editor + Drive placeholder. Course picker hides; courses re-sync
+ *     happens from the dashboard.
+ */
 export default async function TeacherSetupPage() {
   const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/");
+  if (!user) redirect("/login");
 
   // Bulk-load everything in parallel — keeps the page snappy and avoids
   // the old useEffect waterfall.
@@ -65,18 +81,26 @@ export default async function TeacherSetupPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Canvas &amp; Drive setup</h1>
-        <p className="text-sm text-muted-foreground">
-          Connect your Canvas account, customize the card students see in
-          Canvas, and (soon) configure Google Drive. Your day-to-day work
-          lives on the{" "}
-          <a
-            href="/teacher/dashboard"
-            className="underline underline-offset-2"
-          >
-            dashboard
-          </a>
-          .
-        </p>
+        {teacherId ? (
+          <p className="text-sm text-muted-foreground">
+            Connect your Canvas account, customize the card students see in
+            Canvas, and (soon) configure Google Drive. Your day-to-day work
+            lives on the{" "}
+            <a
+              href="/teacher/dashboard"
+              className="underline underline-offset-2"
+            >
+              dashboard
+            </a>
+            .
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Welcome to Handwritten Helper. Paste your Canvas URL + API token
+            below to get started — saving the connection promotes your
+            account to a teacher and unlocks the rest of setup.
+          </p>
+        )}
       </div>
 
       <CanvasConnectionSection
@@ -85,28 +109,40 @@ export default async function TeacherSetupPage() {
         initialHasCourses={hasCourses}
       />
 
-      <CardTextEditor
-        defaults={defaults}
-        overrides={overrides}
-        appBaseUrl={appBaseUrl}
-      />
+      {/* Course picker: shown when Canvas is configured but no courses
+          have been synced yet. Once the user picks + names + syncs,
+          subsequent renders skip this section (hasCourses=true). */}
+      {teacherId && isConfigured && !hasCourses && <CoursePickerSection />}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Google Drive</CardTitle>
-          <CardDescription>
-            Where transcribed Google Docs are saved. Folder template and
-            sharing scope coming soon.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Today, each student&apos;s transcribed work lands in a per-course
-            folder in their own Drive, shared with you. Teacher-side Drive
-            customization (folder template, sharing scope) ships later.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Card-text editor + Drive placeholder require a teacher row;
+          hidden during the first-time-connect state. */}
+      {teacherId && (
+        <>
+          <CardTextEditor
+            defaults={defaults}
+            overrides={overrides}
+            appBaseUrl={appBaseUrl}
+          />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Google Drive</CardTitle>
+              <CardDescription>
+                Where transcribed Google Docs are saved. Folder template and
+                sharing scope coming soon.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Today, each student&apos;s transcribed work lands in a
+                per-course folder in their own Drive, shared with you.
+                Teacher-side Drive customization (folder template, sharing
+                scope) ships later.
+              </p>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

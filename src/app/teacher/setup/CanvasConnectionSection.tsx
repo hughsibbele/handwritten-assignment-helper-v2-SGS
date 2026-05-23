@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,14 +28,15 @@ export function CanvasConnectionSection({
   initialIsConfigured: boolean;
   initialHasCourses: boolean;
 }) {
-  const router = useRouter();
   const [canvasUrl, setCanvasUrl] = useState(initialCanvasUrl);
   const [canvasToken, setCanvasToken] = useState("");
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [isConfigured, setIsConfigured] = useState(initialIsConfigured);
-  const [hasCourses, setHasCourses] = useState(initialHasCourses);
+  // hasCourses is no longer used inside this section (the parent page
+  // renders the dedicated CoursePickerSection when needed). Kept in the
+  // prop signature for backward-compat; remove in a follow-up cleanup.
+  void initialHasCourses;
 
   async function handleTestCanvas() {
     setTesting(true);
@@ -84,23 +84,6 @@ export function CanvasConnectionSection({
       );
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleSyncCourses() {
-    setSyncing(true);
-    try {
-      const res = await fetch("/api/canvas/courses/sync", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to sync courses");
-      const data = await res.json();
-      toast.success(`Synced ${data.courses?.length ?? 0} courses from Canvas`);
-      setHasCourses((data.courses?.length ?? 0) > 0);
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to sync courses",
-      );
-    } finally {
-      setSyncing(false);
     }
   }
 
@@ -157,34 +140,6 @@ export function CanvasConnectionSection({
           </Button>
         </div>
 
-        {isConfigured && !hasCourses && (
-          <div className="rounded-md border border-dashed bg-muted/40 p-4 text-sm">
-            <p className="mb-2 font-medium">Pull your courses to get started</p>
-            <p className="mb-3 text-muted-foreground">
-              Syncs your active Canvas courses, assignments, and student
-              rosters. You only need to do this once — after that, the
-              dashboard keeps things in sync on its own.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleSyncCourses} disabled={syncing}>
-                {syncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sync courses from Canvas
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push("/teacher/dashboard")}
-              >
-                Skip and go to dashboard
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {isConfigured && hasCourses && (
-          <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
-            Courses synced. Re-sync happens automatically from the dashboard.
-          </div>
-        )}
       </CardContent>
     </Card>
   );

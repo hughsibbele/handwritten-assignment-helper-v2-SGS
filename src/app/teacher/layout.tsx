@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth/admin";
 import { getCurrentTeacher } from "@/lib/auth/teacher";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 
@@ -10,17 +11,20 @@ export default async function TeacherLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Verify teacher role via the shared helper (M4.11c). Returns null when
-  // the signed-in user isn't a teacher; we redirect them to the student
-  // dashboard. The /teacher/setup carve-out lives in the proxy; anyone
-  // past it without a teacher row got redirected before we got here.
+  // M4.11d: layout no longer redirects on missing teacher row. The proxy
+  // already gates every /teacher/* path (except /teacher/setup) to
+  // require a teacher row, so removing the layout check is safe and lets
+  // first-time users hit /teacher/setup with their session intact. The
+  // setup page handles the no-teacher-row case itself (showing only the
+  // Canvas connection section until the row is created).
+  const supabase = await getServerDbClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   const teacher = await getCurrentTeacher();
-
-  if (!teacher) {
-    redirect("/student/dashboard");
-  }
-
-  const viewerIsAdmin = await isAdmin();
+  const viewerIsAdmin = teacher ? await isAdmin() : false;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -51,7 +55,7 @@ export default async function TeacherLayout({
               </Link>
             )}
             <span className="hidden text-xs italic text-cool-gray sm:inline">
-              {teacher.email}
+              {teacher?.email ?? user.email ?? ""}
             </span>
             <SignOutButton />
           </nav>
