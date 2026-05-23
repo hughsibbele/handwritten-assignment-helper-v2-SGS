@@ -34,13 +34,13 @@ export function UpcomingAssignments({
   }, [assignments, search]);
 
   if (assignments.length === 0) {
-    return <p className="text-sm text-muted-foreground">No assignments yet</p>;
+    return <p className="text-sm text-cool-gray">No assignments yet</p>;
   }
 
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cool-gray" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -50,7 +50,7 @@ export function UpcomingAssignments({
       </div>
 
       {visible.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-cool-gray">
           No assignments match &ldquo;{search}&rdquo;.
         </p>
       ) : (
@@ -80,7 +80,7 @@ export function UpcomingAssignments({
                       )}
                       {isDone && <Badge variant="default">Submitted</Badge>}
                     </div>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="mt-1 flex items-center gap-2 text-sm text-cool-gray">
                       <span>{a.course?.name}</span>
                       {a.due_date && (
                         <>
@@ -96,7 +96,7 @@ export function UpcomingAssignments({
                     <div className="mt-2">
                       <Link
                         href={`/student/submissions/${sub!.id}`}
-                        className="text-sm font-medium text-primary hover:underline"
+                        className="text-sm font-medium text-maroon hover:underline"
                       >
                         Continue Working
                       </Link>
@@ -106,7 +106,7 @@ export function UpcomingAssignments({
                     <div className="mt-2">
                       <Link
                         href={`/student/courses/${a.course?.id}/assignments/${a.id}?resubmit=true`}
-                        className="text-sm font-medium text-primary hover:underline"
+                        className="text-sm font-medium text-maroon hover:underline"
                       >
                         Resubmit
                       </Link>

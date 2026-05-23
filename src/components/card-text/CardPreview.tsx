@@ -34,7 +34,7 @@ export function CardPreview({
   const html = raw.replace(/<!--\s*handwritten:card[^>]*-->\s*/i, "");
   return (
     <div className="rounded border bg-muted/30 p-3">
-      <div className="mb-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+      <div className="mb-2 text-[10px] uppercase tracking-wide text-cool-gray">
         Preview — what students see in Canvas
       </div>
       <div

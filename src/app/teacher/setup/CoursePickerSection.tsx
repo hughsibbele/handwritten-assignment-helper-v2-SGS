@@ -144,13 +144,13 @@ export function CoursePickerSection() {
                     className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/50"
                   >
                     {selectedCourseIds.has(c.id) ? (
-                      <CheckSquare className="h-4 w-4 shrink-0 text-primary" />
+                      <CheckSquare className="h-4 w-4 shrink-0 text-maroon" />
                     ) : (
-                      <Square className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Square className="h-4 w-4 shrink-0 text-cool-gray" />
                     )}
                     <span className="flex-1">{c.name}</span>
                     {c.term && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-cool-gray">
                         {c.term}
                       </span>
                     )}
@@ -168,7 +168,7 @@ export function CoursePickerSection() {
 
         {showNaming && syncedCourses.length === 0 && (
           <>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-cool-gray">
               Give each course a short display name. This will be used to name
               Google Drive folders for student work (e.g. &quot;FLC&quot; or
               &quot;Chekhov&quot;).
@@ -178,7 +178,7 @@ export function CoursePickerSection() {
                 .filter((c) => selectedCourseIds.has(c.id))
                 .map((c) => (
                   <div key={c.id} className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-cool-gray">
                       {c.name}
                     </Label>
                     <Input
@@ -216,7 +216,7 @@ export function CoursePickerSection() {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   {c.name}
                   {c.term && (
-                    <span className="text-muted-foreground">({c.term})</span>
+                    <span className="text-cool-gray">({c.term})</span>
                   )}
                 </li>
               ))}

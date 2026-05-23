@@ -82,7 +82,7 @@ export default async function TeacherSetupPage() {
       <div>
         <h1 className="text-2xl font-bold">Canvas &amp; Drive setup</h1>
         {teacherId ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-cool-gray">
             Connect your Canvas account, customize the card students see in
             Canvas, and (soon) configure Google Drive. Your day-to-day work
             lives on the{" "}
@@ -95,7 +95,7 @@ export default async function TeacherSetupPage() {
             .
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-cool-gray">
             Welcome to Handwritten Helper. Paste your Canvas URL + API token
             below to get started — saving the connection promotes your
             account to a teacher and unlocks the rest of setup.
@@ -133,7 +133,7 @@ export default async function TeacherSetupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-cool-gray">
                 Today, each student&apos;s transcribed work lands in a
                 per-course folder in their own Drive, shared with you.
                 Teacher-side Drive customization (folder template, sharing

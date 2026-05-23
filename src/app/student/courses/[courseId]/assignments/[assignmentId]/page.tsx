@@ -218,7 +218,7 @@ export default function AssignmentUploadPage() {
   }
 
   if (pageState === "not-found" || !assignment) {
-    return <p className="text-muted-foreground">Assignment not found.</p>;
+    return <p className="text-cool-gray">Assignment not found.</p>;
   }
 
   if (pageState === "already-submitted" && existingSub) {
@@ -308,7 +308,7 @@ export default function AssignmentUploadPage() {
           )}
 
           {assignment.description && (
-            <p className="mb-4 text-sm text-muted-foreground">
+            <p className="mb-4 text-sm text-cool-gray">
               {assignment.description}
             </p>
           )}
@@ -335,7 +335,7 @@ export default function AssignmentUploadPage() {
               />
 
               {uploading && (
-                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm text-cool-gray">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Uploading photos...
                 </div>

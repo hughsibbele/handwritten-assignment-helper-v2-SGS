@@ -154,9 +154,9 @@ function PizzaTracker({ steps }: { steps: TrackerStep[] }) {
                 step.status === "completed" &&
                   "bg-primary text-primary-foreground",
                 step.status === "active" &&
-                  "border-2 border-primary text-primary animate-pulse",
+                  "border-2 border-primary text-maroon animate-pulse",
                 step.status === "upcoming" &&
-                  "border-2 border-muted-foreground/30 text-muted-foreground/50"
+                  "border-2 border-muted-foreground/30 text-cool-gray/50"
               )}
             >
               {step.status === "completed" ? (
@@ -168,9 +168,9 @@ function PizzaTracker({ steps }: { steps: TrackerStep[] }) {
             <span
               className={cn(
                 "max-w-[72px] text-center text-[11px] leading-tight sm:max-w-[80px] sm:text-xs",
-                step.status === "completed" && "font-medium text-primary",
-                step.status === "active" && "font-semibold text-foreground",
-                step.status === "upcoming" && "text-muted-foreground/50"
+                step.status === "completed" && "font-medium text-maroon",
+                step.status === "active" && "font-semibold text-ink",
+                step.status === "upcoming" && "text-cool-gray/50"
               )}
             >
               {step.label}
@@ -223,7 +223,7 @@ function SuccessPanel({
               href={submission.gdoc_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-maroon underline"
             >
               <FileText className="h-4 w-4" />
               Open Google Doc
@@ -235,7 +235,7 @@ function SuccessPanel({
               href={submission.canvas_submission_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-maroon underline"
             >
               <ExternalLink className="h-4 w-4" />
               View Canvas Submission
@@ -255,20 +255,20 @@ function SuccessPanel({
         <div className="flex gap-2">
           <Link
             href="/student/dashboard"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Link>
           <Link
             href={resubmitHref}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
           >
             <RotateCcw className="h-4 w-4" />
             Resubmit
           </Link>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-cool-gray">
           You can close this window.
         </p>
       </div>
@@ -493,7 +493,7 @@ export default function SubmissionPage() {
   }
 
   if (!submission) {
-    return <p className="text-muted-foreground">Submission not found.</p>;
+    return <p className="text-cool-gray">Submission not found.</p>;
   }
 
   const completedPhotos = photos.filter(
@@ -568,7 +568,7 @@ export default function SubmissionPage() {
           {/* Draft with no photos — show link back to upload */}
           {submission.status === "draft" && photos.length === 0 && (
             <div className="py-4 text-center">
-              <p className="mb-3 text-sm text-muted-foreground">
+              <p className="mb-3 text-sm text-cool-gray">
                 No content yet. Upload your photos to get started.
               </p>
               <Link
@@ -614,7 +614,7 @@ export default function SubmissionPage() {
           {/* Review editor */}
           {isReady && !isDone && (
             <>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-cool-gray">
                 Review and edit the transcription below. Fix any errors, then
                 click Confirm to save it as a Google Doc.
               </p>
@@ -640,7 +640,7 @@ export default function SubmissionPage() {
                       {canvasToggleLabel}
                     </span>
                     {!canSubmitToCanvas && (
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <p className="flex items-center gap-1 text-xs text-cool-gray">
                         <AlertTriangle className="h-3 w-3" />
                         This assignment doesn&apos;t accept text submissions on
                         Canvas

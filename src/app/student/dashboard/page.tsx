@@ -24,24 +24,24 @@ export default async function StudentDashboard() {
         <h1 className="text-2xl font-bold">Welcome!</h1>
         <Card>
           <CardContent className="space-y-3 py-8">
-            <p className="text-muted-foreground">
+            <p className="text-cool-gray">
               We don&apos;t see you on any course roster yet. To get started,
               ask your teacher to:
             </p>
-            <ol className="ml-5 list-decimal space-y-1 text-sm text-muted-foreground">
+            <ol className="ml-5 list-decimal space-y-1 text-sm text-cool-gray">
               <li>Install the &ldquo;Upload handwritten work&rdquo; card on
                 your Canvas assignment.</li>
               <li>Sync their Canvas roster from the teacher dashboard.</li>
             </ol>
-            <p className="pt-2 text-sm text-muted-foreground">
+            <p className="pt-2 text-sm text-cool-gray">
               Then open the card in Canvas and you&apos;ll land back here
               signed in.
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-cool-gray">
               Are you a teacher?{" "}
               <Link
                 href="/setup"
-                className="font-medium text-primary underline"
+                className="font-medium text-maroon underline"
               >
                 Set up your account
               </Link>
@@ -138,7 +138,7 @@ export default async function StudentDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Your work</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-cool-gray">
           Recent uploads and what&apos;s coming up. Start a new upload from
           the &ldquo;Upload handwritten work&rdquo; card on the Canvas
           assignment.
@@ -169,7 +169,7 @@ export default async function StudentDashboard() {
         </CardHeader>
         <CardContent>
           {submissions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-cool-gray">
               No submissions yet.
             </p>
           ) : (
@@ -191,7 +191,7 @@ export default async function StudentDashboard() {
                         </p>
                         <StatusBadge status={s.status} />
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-1 text-sm text-cool-gray">
                         {assignment?.course?.name}
                       </p>
                     </Link>

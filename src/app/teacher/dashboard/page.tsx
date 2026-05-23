@@ -177,18 +177,18 @@ export default async function TeacherDashboard() {
       {activeGroups.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">
+            <p className="text-cool-gray">
               No active-term courses synced yet.{" "}
               <Link
                 href="/setup"
-                className="font-medium text-primary underline"
+                className="font-medium text-maroon underline"
               >
                 Sync your courses from Canvas
               </Link>{" "}
               to get started.
             </p>
             {hiddenCount > 0 && (
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 text-xs text-cool-gray">
                 ({hiddenCount} older course{hiddenCount === 1 ? "" : "s"}{" "}
                 hidden by the active-term filter.)
               </p>
@@ -201,7 +201,7 @@ export default async function TeacherDashboard() {
             <CourseAccordion key={g.id} group={g} />
           ))}
           {hiddenCount > 0 && (
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-center text-xs text-cool-gray">
               {hiddenCount} older course{hiddenCount === 1 ? "" : "s"} hidden
               by the active-term filter.
             </p>

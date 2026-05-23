@@ -137,7 +137,7 @@ export function CardTextDefaultsEditor({
 
           <div className="lg:sticky lg:top-4 self-start">
             <CardPreview appBaseUrl={appBaseUrl} text={effective} />
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-2 text-xs text-cool-gray">
               Live preview reflects your draft. The button doesn&apos;t go
               anywhere in this preview.
             </p>

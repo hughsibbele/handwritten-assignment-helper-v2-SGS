@@ -15,7 +15,7 @@ export default async function AdminLayout({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs uppercase tracking-wide text-cool-gray">
             Admin
           </p>
           <h1 className="text-2xl font-bold">Handwritten Helper</h1>

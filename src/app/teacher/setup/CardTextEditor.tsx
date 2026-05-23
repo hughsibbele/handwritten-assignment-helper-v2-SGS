@@ -169,7 +169,7 @@ export function CardTextEditor({
 
           <div className="lg:sticky lg:top-4 self-start">
             <CardPreview appBaseUrl={appBaseUrl} text={effective} />
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-2 text-xs text-cool-gray">
               Live preview reflects your draft. The button doesn&apos;t go
               anywhere in this preview.
             </p>
@@ -206,7 +206,7 @@ function Field({
           <button
             type="button"
             onClick={onReset}
-            className="text-xs text-primary hover:underline"
+            className="text-xs text-maroon hover:underline"
           >
             reset to default
           </button>
@@ -230,7 +230,7 @@ function Field({
           placeholder={placeholder}
         />
       )}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-cool-gray">
         {overriding
           ? "● overriding the default. Empty saves re-inherit."
           : "inherits the school-wide default shown as placeholder above"}

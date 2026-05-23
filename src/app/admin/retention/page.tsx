@@ -41,17 +41,17 @@ export default async function AdminRetentionPage() {
         <CardContent>
           <div className="grid gap-4 text-sm sm:grid-cols-3">
             <div>
-              <div className="text-muted-foreground">Submissions</div>
+              <div className="text-cool-gray">Submissions</div>
               <div className="text-2xl font-semibold">
                 {submissionCount ?? 0}
               </div>
             </div>
             <div>
-              <div className="text-muted-foreground">Photo rows</div>
+              <div className="text-cool-gray">Photo rows</div>
               <div className="text-2xl font-semibold">{photoCount ?? 0}</div>
             </div>
             <div>
-              <div className="text-muted-foreground">Oldest submission</div>
+              <div className="text-cool-gray">Oldest submission</div>
               <div className="text-2xl font-semibold">
                 {oldest?.created_at
                   ? new Date(oldest.created_at).toLocaleDateString()

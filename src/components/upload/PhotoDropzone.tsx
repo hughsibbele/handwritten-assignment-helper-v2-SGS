@@ -124,7 +124,7 @@ export function PhotoDropzone({
         } ${disabled ? "pointer-events-none opacity-50" : ""}`}
       >
         <input {...getInputProps()} />
-        <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
+        <Upload className="mb-3 h-10 w-10 text-cool-gray" />
         {isDragActive ? (
           <p className="text-sm font-medium">Drop your photos here</p>
         ) : (
@@ -132,7 +132,7 @@ export function PhotoDropzone({
             <p className="text-sm font-medium">
               Tap to select photos of your writing
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-cool-gray">
               JPG, PNG, WebP, or HEIC
             </p>
           </>

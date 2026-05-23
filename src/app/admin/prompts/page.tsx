@@ -42,7 +42,7 @@ export default async function AdminPromptsPage() {
       </Card>
       {prompts.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          <CardContent className="py-8 text-center text-sm text-cool-gray">
             No prompts found. Re-run migration 021 to seed the OCR prompt.
           </CardContent>
         </Card>

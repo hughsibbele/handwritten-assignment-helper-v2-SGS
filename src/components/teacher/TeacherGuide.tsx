@@ -25,9 +25,9 @@ export function TeacherGuide() {
         <DialogHeader>
           <DialogTitle>How to Use the Assignment Helper</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 text-sm text-muted-foreground">
+        <div className="space-y-4 text-sm text-cool-gray">
           <section>
-            <h3 className="mb-1 font-semibold text-foreground">
+            <h3 className="mb-1 font-semibold text-ink">
               1. Sync Your Courses
             </h3>
             <p>
@@ -38,7 +38,7 @@ export function TeacherGuide() {
           </section>
 
           <section>
-            <h3 className="mb-1 font-semibold text-foreground">
+            <h3 className="mb-1 font-semibold text-ink">
               2. Configure Assignments
             </h3>
             <p>
@@ -50,7 +50,7 @@ export function TeacherGuide() {
           </section>
 
           <section>
-            <h3 className="mb-1 font-semibold text-foreground">
+            <h3 className="mb-1 font-semibold text-ink">
               3. Students Upload &amp; Submit
             </h3>
             <p>
@@ -62,7 +62,7 @@ export function TeacherGuide() {
           </section>
 
           <section>
-            <h3 className="mb-1 font-semibold text-foreground">
+            <h3 className="mb-1 font-semibold text-ink">
               4. What Happens on Confirm
             </h3>
             <ul className="list-disc space-y-1 pl-4">
@@ -81,7 +81,7 @@ export function TeacherGuide() {
           </section>
 
           <section>
-            <h3 className="mb-1 font-semibold text-foreground">
+            <h3 className="mb-1 font-semibold text-ink">
               5. Re-syncing
             </h3>
             <p>
@@ -92,7 +92,7 @@ export function TeacherGuide() {
           </section>
 
           <section className="rounded-md border border-border bg-muted/50 p-3">
-            <h3 className="mb-1 font-semibold text-foreground">
+            <h3 className="mb-1 font-semibold text-ink">
               Tips
             </h3>
             <ul className="list-disc space-y-1 pl-4">

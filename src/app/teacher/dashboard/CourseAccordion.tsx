@@ -265,7 +265,7 @@ function AssignmentRowItem({
                   key={d.char}
                   className={
                     d.active
-                      ? "rounded bg-primary/15 px-1 text-primary"
+                      ? "rounded bg-primary/15 px-1 text-maroon"
                       : "rounded bg-stone-100 px-1 text-stone-400"
                   }
                   title={`${d.label}: ${d.active ? "on" : "off"}`}

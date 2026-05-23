@@ -58,7 +58,7 @@ export default function LoginPage() {
           <Button onClick={handleGoogleLogin} className="w-full" size="lg">
             Sign in with Google
           </Button>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-cool-gray">
             Use your school Google account to sign in
           </p>
         </CardContent>
