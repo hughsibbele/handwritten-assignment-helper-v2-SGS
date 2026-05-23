@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
 
 // Returns the logged-in user's email iff they have an active row in the
 // `admins` table. Self-bootstraps the FIRST admin from INITIAL_ADMIN_EMAIL
@@ -13,14 +13,14 @@ import { createServerSupabase } from "@/lib/supabase/server";
 // 403, hide UI.
 
 export const getCurrentAdminEmail = cache(async (): Promise<string | null> => {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user || !user.email) return null;
 
   const email = user.email.toLowerCase();
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   const { data: row } = await admin
     .from("admins")

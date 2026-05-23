@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import {
   loadCardTextDefaults,
   loadTeacherCardOverrides,
@@ -16,7 +16,7 @@ import { CanvasConnectionSection } from "./CanvasConnectionSection";
 import { CardTextEditor } from "./CardTextEditor";
 
 export default async function TeacherSetupPage() {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -24,7 +24,7 @@ export default async function TeacherSetupPage() {
 
   // Bulk-load everything in parallel — keeps the page snappy and avoids
   // the old useEffect waterfall.
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const teacherP = admin
     .from("teachers")
     .select("id, canvas_base_url, canvas_api_token")

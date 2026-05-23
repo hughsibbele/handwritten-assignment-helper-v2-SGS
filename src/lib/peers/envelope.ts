@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { anonToken } from "@/lib/anonymizer/token";
 import {
   getCourseScrubber,
@@ -43,7 +43,7 @@ export async function buildEnvelopeForCanvasIds(
   canvasUserId: number,
   canvasAssignmentId: number,
 ): Promise<HandwrittenEnvelope | null> {
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // students.canvas_user_id is UNIQUE; one row per Canvas user.
   const { data: studentRows } = await admin

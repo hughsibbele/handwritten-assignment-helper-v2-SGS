@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/auth/admin";
 
 // Escape a single CSV field per RFC 4180: wrap in quotes, double any embedded
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const before = url.searchParams.get("before");
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   let query = admin
     .from("submissions")
     .select(

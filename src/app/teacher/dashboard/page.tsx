@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { getServerDbClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
@@ -15,7 +15,7 @@ import type {
 import { bulkSuperGraderScope } from "@/lib/super-grader/scope";
 
 export default async function TeacherDashboard() {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

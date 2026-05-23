@@ -1,6 +1,6 @@
 import { google, type Auth } from "googleapis";
 // Admin client required: writes enrollment folder ID in cross-role context
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 
 /**
  * Extracts a last name from a display name like "Jane Smith" -> "Smith".
@@ -23,7 +23,7 @@ export async function getOrCreateCourseFolder(
   studentDisplayName: string,
   teacherEmail: string
 ): Promise<string> {
-  const supabase = createAdminClient();
+  const supabase = createAdminDbClient();
 
   // Check if folder already exists on this enrollment
   const { data: enrollment } = await supabase

@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import {
 import { RetentionPanel } from "@/components/admin/retention-panel";
 
 export default async function AdminRetentionPage() {
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // Headline counts for the panel — total submissions + photo blobs still
   // in storage. The actual filtered list comes from the client component

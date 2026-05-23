@@ -1,6 +1,6 @@
 import { inngest } from "../client";
 // Admin client required: Inngest cron job has no user session/auth cookies
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 
 export const cleanupOldPhotos = inngest.createFunction(
   {
@@ -12,7 +12,7 @@ export const cleanupOldPhotos = inngest.createFunction(
     // Safety net: clean up any orphaned photos older than 1 week
     // (photos are normally deleted immediately after transcription)
     const photos = await step.run("find-old-photos", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
@@ -34,7 +34,7 @@ export const cleanupOldPhotos = inngest.createFunction(
 
     // Delete files from storage in batches
     const deleted = await step.run("delete-storage-files", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const paths = photos.map((p) => p.storage_path).filter(Boolean);
 
       const { error } = await supabase.storage
@@ -47,7 +47,7 @@ export const cleanupOldPhotos = inngest.createFunction(
 
     // Null out storage_path so we don't try to delete again
     await step.run("clear-storage-paths", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const ids = photos.map((p) => p.id);
 
       await supabase

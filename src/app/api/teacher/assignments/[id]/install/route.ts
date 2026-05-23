@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { CanvasClient } from "@/lib/canvas/client";
 import {
   buildHandwrittenCardBlock,
@@ -19,7 +19,7 @@ import { resolveCardTextForTeacher } from "@/lib/card-text/resolve";
 type Ctx = { params: Promise<{ id: string }> };
 
 async function loadContext(assignmentId: string) {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -133,7 +133,7 @@ export async function POST(_request: Request, { params }: Ctx) {
   // Service-role upsert: RLS would otherwise re-evaluate the assignment-join
   // policy on every install which is fine but extra work; this matches how
   // other HAH install-side writes are done.
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { error: upsertErr } = await admin
     .from("assignment_install_state")
     .upsert(
@@ -200,7 +200,7 @@ export async function DELETE(_request: Request, { params }: Ctx) {
     }
   }
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { error: delErr } = await admin
     .from("assignment_install_state")
     .delete()

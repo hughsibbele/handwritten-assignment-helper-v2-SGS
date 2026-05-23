@@ -1,7 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export async function createServerSupabase() {
+/**
+ * Build a request-scoped Supabase client that uses the caller's cookies
+ * (RLS as the signed-in user). Named to match the suite-wide convention
+ * (AID's `getServerDbClient`), renamed from `createServerSupabase` 2026-05-22
+ * as part of M4.13.
+ */
+export async function getServerDbClient() {
   const cookieStore = await cookies();
 
   return createServerClient(

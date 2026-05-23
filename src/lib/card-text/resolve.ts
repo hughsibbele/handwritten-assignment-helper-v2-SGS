@@ -15,7 +15,7 @@ import {
   DEFAULT_HANDWRITTEN_CARD_TEXT,
   type HandwrittenCardText,
 } from "@/lib/canvas/install";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 
 type TeacherOverrides = {
   card_kicker?: string | null;
@@ -36,7 +36,7 @@ type SystemDefaults = {
 export async function resolveCardTextForTeacher(
   teacherId: string,
 ): Promise<HandwrittenCardText> {
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // Fetch both rows in parallel — admin client bypasses RLS, fine here
   // because the data is non-sensitive and the install path already
@@ -88,7 +88,7 @@ export type CardTextDefaultsRow = SystemDefaults & { updated_at: string };
 /** Load the singleton defaults row in raw column shape (snake_case) — used
  *  by the admin editor which submits via FormData with snake_case names. */
 export async function loadCardTextDefaultsRow(): Promise<CardTextDefaultsRow> {
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data } = await admin
     .from("card_text_defaults")
     .select("kicker, title, body, cta_label, footnote, updated_at")
@@ -127,7 +127,7 @@ export async function loadTeacherCardOverrides(teacherId: string): Promise<{
   card_cta_label: string | null;
   card_footnote: string | null;
 }> {
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data } = await admin
     .from("teachers")
     .select(

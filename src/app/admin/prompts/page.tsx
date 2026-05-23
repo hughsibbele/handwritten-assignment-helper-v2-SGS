@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ type PromptRow = {
 };
 
 export default async function AdminPromptsPage() {
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data: rows } = await admin
     .from("prompts")
     .select("id, owner, key, body, version, updated_at")

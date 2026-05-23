@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { anonToken } from "./token";
 import { buildScrubber, type RosterEntry } from "./scrub";
 
@@ -63,7 +63,7 @@ export async function getCourseScrubber(
     throw new RosterMissingError("SUPER_GRADER_SALT env var is unset");
   }
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data: rows, error } = await admin
     .from("enrollments")
     .select("students!inner ( canvas_user_id, email, display_name )")
@@ -123,7 +123,7 @@ export async function getCourseScrubber(
 export async function getScrubberForSubmission(
   submissionId: string,
 ): Promise<(text: string) => string> {
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data, error } = await admin
     .from("submissions")
     .select("assignments!inner ( course_id )")

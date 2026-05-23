@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { getServerDbClient } from "@/lib/supabase/server";
 // Admin client required: student can't see unenrolled courses via RLS
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -9,7 +9,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   const joinCode = parsed.data.joinCode.trim().toUpperCase();
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // Look up course by join code
   const { data: course } = await admin

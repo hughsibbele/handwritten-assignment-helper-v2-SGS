@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -12,7 +12,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: submissionId } = await params;
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -27,7 +27,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // Fetch submission and verify ownership
   const { data: submission } = await admin

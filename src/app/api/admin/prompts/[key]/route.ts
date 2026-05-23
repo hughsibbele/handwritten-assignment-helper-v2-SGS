@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/auth/admin";
 import { invalidatePromptCache } from "@/lib/prompts/load";
 import { z } from "zod";
@@ -23,7 +23,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // Read current version to compute the next one atomically-enough for
   // single-admin use. Last-write-wins is fine here — admin is one person.

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { getServerDbClient } from "@/lib/supabase/server";
 import { CanvasClient } from "@/lib/canvas/client";
 
 // GET: List available courses from Canvas (no DB writes)
 export async function GET() {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

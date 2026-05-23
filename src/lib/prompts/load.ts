@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 
 const TTL_MS = 10 * 60 * 1000;
 
@@ -27,7 +27,7 @@ export async function loadPrompt(
   if (hit && hit.expires > Date.now()) return hit.body;
 
   try {
-    const admin = createAdminClient();
+    const admin = createAdminDbClient();
     const { data: row } = await admin
       .from("prompts")
       .select("body, version")

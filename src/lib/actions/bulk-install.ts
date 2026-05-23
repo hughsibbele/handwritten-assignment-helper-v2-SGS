@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { CanvasClient } from "@/lib/canvas/client";
 import {
   buildHandwrittenCardBlock,
@@ -50,7 +50,7 @@ export async function bulkInstallAssignments(
     return { results: [], successCount: 0, failureCount: 0 };
   }
 
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -76,7 +76,7 @@ export async function bulkInstallAssignments(
   const cardText = await resolveCardTextForTeacher(teacher.id);
 
   const canvas = new CanvasClient(teacher.canvas_base_url, teacher.canvas_api_token);
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   const results: BulkResult["results"] = [];
   for (const id of assignmentIds) {
@@ -117,7 +117,7 @@ export async function bulkUninstallAssignments(
     return { results: [], successCount: 0, failureCount: 0 };
   }
 
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -134,7 +134,7 @@ export async function bulkUninstallAssignments(
   }
 
   const canvas = new CanvasClient(teacher.canvas_base_url, teacher.canvas_api_token);
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   const results: BulkResult["results"] = [];
   for (const id of assignmentIds) {
@@ -165,7 +165,7 @@ export async function bulkUninstallAssignments(
 
 // ---------------------------------------------------------------------------
 
-type AdminClient = ReturnType<typeof createAdminClient>;
+type AdminClient = ReturnType<typeof createAdminDbClient>;
 
 async function installOne({
   admin,

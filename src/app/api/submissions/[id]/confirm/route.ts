@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { getStudentGoogleClient } from "@/lib/google/auth";
 import { createGoogleDoc } from "@/lib/google/docs";
 import { getOrCreateCourseFolder } from "@/lib/google/drive";
@@ -39,7 +39,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: submissionId } = await params;
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -55,7 +55,7 @@ export async function POST(
   }
 
   // Admin client required: student needs teacher's Canvas credentials (cross-role access)
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // Fetch submission with related data needed for doc creation + Canvas submission
   const { data: submission } = await admin

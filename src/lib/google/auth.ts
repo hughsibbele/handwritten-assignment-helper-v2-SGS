@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 // Admin client required: reads any student's tokens (caller may be teacher/system context)
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret";
 
 /**
@@ -14,7 +14,7 @@ import { decryptSecret, encryptSecret } from "@/lib/crypto/secret";
  * so we don't accumulate plaintext on every refresh.
  */
 export async function getStudentGoogleClient(studentId: string) {
-  const supabase = createAdminClient();
+  const supabase = createAdminDbClient();
 
   const { data: student, error } = await supabase
     .from("students")

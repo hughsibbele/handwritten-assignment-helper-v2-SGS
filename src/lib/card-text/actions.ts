@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/auth/admin";
 
 // M6.15 — server actions for the Canvas card text editors.
@@ -70,7 +70,7 @@ export async function updateCardTextDefaults(
   // Service-role client because the table's admin-write policy gates on
   // is_admin() which is_admin() in the SQL helper — we've already checked
   // it above, so going through service-role removes one round-trip.
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { error } = await admin
     .from("card_text_defaults")
     .update(values)
@@ -87,7 +87,7 @@ export async function updateCardTextDefaults(
 // =========================================================================
 
 async function loadAuthedTeacherId(): Promise<string | null> {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -113,7 +113,7 @@ export async function updateMyCardOverrides(
   const teacherId = await loadAuthedTeacherId();
   if (!teacherId) return { ok: false, error: "Not signed in." };
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data: defaultsRow } = await admin
     .from("card_text_defaults")
     .select("kicker, title, body, cta_label, footnote")
@@ -167,7 +167,7 @@ export async function resetMyCardOverride(
     return { ok: false, error: `Field "${field}" can't be reset.` };
   }
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const patch = { [field]: null } as Record<CardField, null>;
   const { error } = await admin
     .from("teachers")

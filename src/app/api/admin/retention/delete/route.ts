@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/auth/admin";
 import { z } from "zod";
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
   const before = parsed.data.beforeDate || null;
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   // Step 1: list the submission ids in scope. We pull ids in one shot
   // (cheap, even at scale) so the chunked deletes below have a stable target

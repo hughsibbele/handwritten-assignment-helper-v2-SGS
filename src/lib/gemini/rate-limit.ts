@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 
 /**
  * Default per-teacher daily cap when neither teachers.gemini_daily_cap nor
@@ -29,7 +29,7 @@ export async function checkAndIncrementGeminiCall(
   teacherId: string,
 ): Promise<boolean> {
   try {
-    const admin = createAdminClient();
+    const admin = createAdminDbClient();
     const { data, error } = await admin.rpc("check_and_increment_gemini_call", {
       p_teacher_id: teacherId,
       p_default_cap: envDefaultCap(),

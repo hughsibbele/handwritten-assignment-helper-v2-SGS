@@ -1,6 +1,6 @@
 import { inngest } from "../client";
 // Admin client required: Inngest background job has no user session/auth cookies
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { transcribeImage } from "@/lib/gemini/transcribe";
 import { checkAndIncrementGeminiCall } from "@/lib/gemini/rate-limit";
 import {
@@ -20,7 +20,7 @@ export const transcribePhoto = inngest.createFunction(
 
     // Step 1: Mark as processing
     const photoExists = await step.run("mark-processing", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const { data: photo } = await supabase
         .from("submission_photos")
         .select("id")
@@ -41,7 +41,7 @@ export const transcribePhoto = inngest.createFunction(
 
     // Step 2: Download image from Supabase Storage
     const imageData = await step.run("download-image", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const { data, error } = await supabase.storage
         .from("submission-photos")
         .download(storagePath);
@@ -73,7 +73,7 @@ export const transcribePhoto = inngest.createFunction(
     // Inngest's retry-with-checkpoint behavior doesn't re-run the rate-limit
     // check on every retry of "call-gemini" — once cleared, it's cleared.
     const rateLimitCheck = await step.run("check-rate-limit", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const { data: row } = await supabase
         .from("submissions")
         .select("assignments!inner ( courses!inner ( teacher_id ) )")
@@ -94,7 +94,7 @@ export const transcribePhoto = inngest.createFunction(
     });
 
     if (!rateLimitCheck.allowed) {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       await supabase
         .from("submission_photos")
         .update({
@@ -140,7 +140,7 @@ export const transcribePhoto = inngest.createFunction(
     });
 
     if (!scrubOutcome.ok) {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       await supabase
         .from("submission_photos")
         .update({
@@ -158,7 +158,7 @@ export const transcribePhoto = inngest.createFunction(
 
     // Step 4: Save (scrubbed) transcription
     const savedOk = await step.run("save-transcription", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const { data: photo } = await supabase
         .from("submission_photos")
         .select("id")
@@ -180,7 +180,7 @@ export const transcribePhoto = inngest.createFunction(
 
     // Step 5: Delete photo from storage (transcription is saved, original no longer needed)
     await step.run("delete-storage-file", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
       const { data: photo } = await supabase
         .from("submission_photos")
         .select("id, storage_path")
@@ -196,7 +196,7 @@ export const transcribePhoto = inngest.createFunction(
 
     // Step 6: Check if all photos in this submission are done
     await step.run("check-submission-complete", async () => {
-      const supabase = createAdminClient();
+      const supabase = createAdminDbClient();
 
       // If submission was reset, don't update it
       const { data: sub } = await supabase

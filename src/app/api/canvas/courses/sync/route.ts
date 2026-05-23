@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
+import { getServerDbClient } from "@/lib/supabase/server";
 // Admin client required: bulk upserts creating student/enrollment records for other users
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { CanvasClient } from "@/lib/canvas/client";
 import { z } from "zod";
 
@@ -15,7 +15,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   const { data: teacher } = await admin
     .from("teachers")

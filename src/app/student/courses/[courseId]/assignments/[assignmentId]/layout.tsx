@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import {
   Card,
   CardContent,
@@ -32,7 +32,7 @@ export default async function StudentAssignmentLayout({
   params: Promise<Params>;
 }) {
   const { courseId, assignmentId } = await params;
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -53,7 +53,7 @@ export default async function StudentAssignmentLayout({
   // part spliced extra OR predicates and could match any student. We now
   // run two narrow lookups and union client-side (.eq is parameter-safe,
   // no string interpolation into the filter language).
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
 
   const byAuthIdPromise = admin
     .from("students")

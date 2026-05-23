@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { encryptSecret } from "@/lib/crypto/secret";
 
 // Phase 0b of REMEDIATION_PLAN.md — restrict the post-callback redirect
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const next = safeNext(searchParams.get("next"));
 
   if (code) {
-    const supabase = await createServerSupabase();
+    const supabase = await getServerDbClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.session) {
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
       if (userEmail) {
         // Admin client required: must find students with NULL auth_user_id (RLS can't match)
-        const admin = createAdminClient();
+        const admin = createAdminDbClient();
 
         // Try to find student by auth_user_id first, then by email
         const { data: studentById } = await admin

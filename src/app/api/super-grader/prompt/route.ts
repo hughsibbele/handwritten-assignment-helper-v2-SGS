@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkSuperGraderBearer } from "@/lib/peers/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 
 /**
  * Pull-on-view prompt fetcher. Super-grader renders satellite-owned prompts
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "key is required" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data: row } = await admin
     .from("prompts")
     .select("body, version, updated_at")

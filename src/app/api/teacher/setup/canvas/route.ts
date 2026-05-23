@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServerDbClient } from "@/lib/supabase/server";
+import { createAdminDbClient } from "@/lib/supabase/admin";
 import { testCanvasConnection } from "@/lib/canvas/connection";
 import { z } from "zod";
 
@@ -10,7 +10,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const supabase = await createServerSupabase();
+  const supabase = await getServerDbClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   // direct SQL by an admin (teachers_allowlist table seeded with existing
   // teachers in migration 025).
   const callerEmail = user.email.toLowerCase();
-  const admin = createAdminClient();
+  const admin = createAdminDbClient();
   const { data: allowed } = await admin
     .from("teachers_allowlist")
     .select("email, active")
