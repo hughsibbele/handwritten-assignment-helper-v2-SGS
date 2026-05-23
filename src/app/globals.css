@@ -4,6 +4,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* EHS brand tokens — additive M4.12. AID uses these explicit names
+ * (text-maroon, text-ink, text-cool-gray, bg-paper, border-dark-blue)
+ * across student + dashboard + admin surfaces; ported here so the shared
+ * BrandHeader component works identically in HAH. The shadcn semantic
+ * tokens below (text-primary, text-foreground, etc.) remain in place for
+ * the existing component tree; M4.12(c) lays the rails for a future
+ * per-component migration to the EHS names. */
+@theme {
+  --color-maroon: #7a1e46;
+  --color-maroon-dark: #5a1535;
+  --color-cool-gray: #54565b;
+  --color-light-blue: #c4dceb;
+  --color-dark-blue: #006890;
+  --color-dark-blue-dark: #004f6e;
+  --color-paper: #fafaf7;
+  --color-ink: #1a1a1a;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -130,4 +148,27 @@
   h1, h2, h3, h4 {
     font-family: var(--font-heading);
   }
+}
+
+/* EHS editorial ornaments — ported from AID (M4.12). Used by BrandHeader
+ * and the "AI USE REFLECTION ·" eyebrow strips on student-facing surfaces. */
+.ehs-rule {
+  display: block;
+  height: 1px;
+  background: var(--color-light-blue);
+  border: 0;
+}
+.ehs-rule-maroon {
+  display: block;
+  height: 2px;
+  background: var(--color-maroon);
+  border: 0;
+}
+.ehs-eyebrow {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-cool-gray);
 }

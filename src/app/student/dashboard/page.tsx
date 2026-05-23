@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookOpen, Clock } from "lucide-react";
-import { UpcomingAssignments } from "@/components/student/upcoming-assignments";
+import { UpcomingAssignments } from "@/components/student/UpcomingAssignments";
 
 export default async function StudentDashboard() {
   const supabase = await getServerDbClient();

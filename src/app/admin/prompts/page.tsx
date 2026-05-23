@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PromptEditor } from "@/components/admin/prompt-editor";
+import { PromptEditor } from "@/components/admin/PromptEditor";
 import { AutoSaveProvider } from "@/components/auto-save/context";
 
 type PromptRow = {

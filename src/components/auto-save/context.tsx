@@ -4,7 +4,7 @@ import { createContext, useContext, useState } from "react";
 import {
   AutoSaveStatusPill,
   type AutoSaveStatus,
-} from "./auto-save-status-pill";
+} from "./AutoSaveStatusPill";
 
 /**
  * Shared auto-save status across all auto-saving forms on a page. Used

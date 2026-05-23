@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RetentionPanel } from "@/components/admin/retention-panel";
+import { RetentionPanel } from "@/components/admin/RetentionPanel";
 
 export default async function AdminRetentionPage() {
   const admin = createAdminDbClient();

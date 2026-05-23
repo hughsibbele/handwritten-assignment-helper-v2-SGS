@@ -4,8 +4,8 @@ import { getServerDbClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
-import { BackgroundSync } from "@/components/teacher/background-sync";
-import { TeacherGuide } from "@/components/teacher/teacher-guide";
+import { BackgroundSync } from "@/components/teacher/BackgroundSync";
+import { TeacherGuide } from "@/components/teacher/TeacherGuide";
 import { termIsCurrent } from "@/lib/academic-year";
 import { CourseAccordion } from "./CourseAccordion";
 import type {

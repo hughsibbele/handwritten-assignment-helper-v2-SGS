@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { PhotoDropzone } from "@/components/upload/photo-dropzone";
+import { PhotoDropzone } from "@/components/upload/PhotoDropzone";
 import {
   Card,
   CardContent,
