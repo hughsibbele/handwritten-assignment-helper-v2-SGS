@@ -6,11 +6,16 @@ import {
 } from "node:crypto";
 
 // Phase 0c of REMEDIATION_PLAN.md — AES-256-GCM helper for encrypting
-// student Google OAuth tokens at rest. Same shape as AID's
-// @ai-documenter/crypto package (HAH is a single-app repo, so the helper
-// lives inline).
+// student Google OAuth tokens at rest.
 //
-// Envelope layout: base64(iv(12) || ciphertext || authtag(16))
+// **Envelope layout:** base64(iv(12) || authtag(16) || ciphertext).
+//
+// Matches `@oral-examiner/crypto` and `@ai-documenter/crypto` byte-for-
+// byte. The pre-2026-05-24 inline shape was `iv || ciphertext || tag`
+// which silently diverged from the package shape; harmonized 2026-05-24
+// when verified that zero encrypted rows existed yet (the operator had
+// not run the M6.21 0c backfill — `STUDENT_GDRIVE_TOKEN_ENC_KEY`
+// hadn't been set; all 7 plaintext-token student rows untouched).
 //
 // Key source: STUDENT_GDRIVE_TOKEN_ENC_KEY (base64-encoded 32 bytes).
 // Generated once with `openssl rand -base64 32` and stored in Vercel env
@@ -53,7 +58,9 @@ export function encryptSecret(plaintext: string): string {
     cipher.final(),
   ]);
   const tag = cipher.getAuthTag();
-  return Buffer.concat([iv, ciphertext, tag]).toString("base64");
+  // iv || tag || ciphertext — matches @oral-examiner/crypto +
+  // @ai-documenter/crypto. NOT iv || ciphertext || tag.
+  return Buffer.concat([iv, tag, ciphertext]).toString("base64");
 }
 
 /**
@@ -67,8 +74,8 @@ export function decryptSecret(envelopeB64: string): string {
     throw new Error("encrypted secret envelope is too short");
   }
   const iv = envelope.subarray(0, IV_LEN);
-  const tag = envelope.subarray(envelope.length - TAG_LEN);
-  const ciphertext = envelope.subarray(IV_LEN, envelope.length - TAG_LEN);
+  const tag = envelope.subarray(IV_LEN, IV_LEN + TAG_LEN);
+  const ciphertext = envelope.subarray(IV_LEN + TAG_LEN);
   const decipher = createDecipheriv(ALG, key, iv);
   decipher.setAuthTag(tag);
   return Buffer.concat([
