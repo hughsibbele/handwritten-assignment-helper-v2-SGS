@@ -176,6 +176,7 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
                     <AssignmentRowItem
                       key={a.id}
                       assignment={a}
+                      courseId={group.id}
                       checked={selectedIds.has(a.id)}
                       onToggle={() => toggleSelection(a.id)}
                     />
@@ -192,10 +193,12 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
 
 function AssignmentRowItem({
   assignment,
+  courseId,
   checked,
   onToggle,
 }: {
   assignment: AssignmentRow;
+  courseId: string;
   checked: boolean;
   onToggle: () => void;
 }) {
@@ -241,9 +244,19 @@ function AssignmentRowItem({
             </Badge>
           )}
           {assignment.installed ? (
-            <Badge variant="secondary" className="text-[10px]">
-              Card installed
-            </Badge>
+            <>
+              <Badge variant="secondary" className="text-[10px]">
+                Card installed
+              </Badge>
+              <a
+                href={`/student/courses/${courseId}/assignments/${assignment.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-dark-blue underline-offset-2 hover:underline"
+              >
+                Preview
+              </a>
+            </>
           ) : (
             <span className="text-stone-400">Not installed</span>
           )}
@@ -265,7 +278,7 @@ function AssignmentRowItem({
                   key={d.char}
                   className={
                     d.active
-                      ? "rounded bg-primary/15 px-1 text-maroon"
+                      ? "rounded bg-maroon/15 px-1 text-maroon"
                       : "rounded bg-stone-100 px-1 text-stone-400"
                   }
                   title={`${d.label}: ${d.active ? "on" : "off"}`}
@@ -430,7 +443,7 @@ function BulkActions({
           pending ||
           (!postToDrive && !postToComment && !postToSubmission)
         }
-        className="rounded-md bg-primary px-3 py-1 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        className="rounded-md bg-maroon px-3 py-1 font-semibold text-white hover:bg-maroon/90 disabled:opacity-50"
       >
         {pending ? (
           <>

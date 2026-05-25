@@ -165,6 +165,21 @@ export async function POST(
 
   const warnings: string[] = [];
 
+  // M7.11 — preview mode: skip Drive auto-save and Canvas submission.
+  // The teacher sees the transcription in the review screen; they can
+  // optionally save to Drive via a manual button (not auto).
+  const isPreview = Boolean(
+    (submission as unknown as { is_preview?: boolean }).is_preview,
+  );
+  if (isPreview) {
+    return NextResponse.json({
+      canvasSubmitted: false,
+      gdocUrl: null,
+      canvasSubmissionUrl: null,
+      warnings: ["Preview mode — no Canvas submission or Drive save."],
+    });
+  }
+
   // Create Google Doc in student's Drive
   let gdocUrl: string | null = null;
   try {
