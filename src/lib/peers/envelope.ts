@@ -1,9 +1,6 @@
 import { createAdminDbClient } from "@/lib/supabase/admin";
 import { anonToken } from "@/lib/anonymizer/token";
-import {
-  getCourseScrubber,
-  RosterMissingError,
-} from "@/lib/anonymizer/roster";
+import { getCourseScrubber } from "@/lib/anonymizer/roster";
 import type { HandwrittenEnvelope } from "./types";
 
 type SubmissionRow = {

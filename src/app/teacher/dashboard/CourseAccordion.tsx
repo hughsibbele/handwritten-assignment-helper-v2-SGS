@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,13 +18,13 @@ import type { AssignmentRow, CourseGroup } from "./dashboard.types";
 // Persist open/closed in sessionStorage so the user's selection survives a
 // router.refresh() after install/uninstall.
 function useSessionFlag(key: string, initial: boolean) {
-  const [value, setValue] = useState(initial);
-  useEffect(() => {
+  const [value, setValue] = useState(() => {
+    if (typeof window === "undefined") return initial;
     const raw = sessionStorage.getItem(key);
-    if (raw === "1") setValue(true);
-    else if (raw === "0") setValue(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (raw === "1") return true;
+    if (raw === "0") return false;
+    return initial;
+  });
   function set(v: boolean) {
     setValue(v);
     sessionStorage.setItem(key, v ? "1" : "0");

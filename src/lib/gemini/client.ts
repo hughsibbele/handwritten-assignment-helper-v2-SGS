@@ -1,10 +1,10 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-let _genAI: GoogleGenerativeAI | null = null;
+let _genAI: GoogleGenAI | null = null;
 
 export function getGeminiClient() {
   if (!_genAI) {
-    _genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    _genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
   }
   return _genAI;
 }

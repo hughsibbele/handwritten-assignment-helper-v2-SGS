@@ -312,14 +312,11 @@ export default function SubmissionPage() {
   const [resetting, setResetting] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Use refs to avoid stale closures in loadData without adding them as deps
   const editedTextRef = useRef(editedText);
-  editedTextRef.current = editedText;
+  useEffect(() => { editedTextRef.current = editedText; }, [editedText]);
   const hasLoadedRef = useRef(false);
 
   const loadData = useCallback(async () => {
-    // Check if student has a Canvas ID (determines Canvas toggle visibility)
-    // Only on first load — canvas_user_id doesn't change mid-session
     if (!hasLoadedRef.current) {
       const {
         data: { user },
@@ -377,9 +374,8 @@ export default function SubmissionPage() {
     setLoading(false);
   }, [submissionId, supabase]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch; all setState calls are post-await
+  useEffect(() => { loadData(); }, [loadData]);
 
   // Real-time subscription for status updates
   useEffect(() => {

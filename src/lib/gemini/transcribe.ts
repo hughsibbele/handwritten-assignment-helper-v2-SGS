@@ -34,27 +34,29 @@ export async function transcribeImage(
     "handwritten_image_transcription",
     DEFAULT_TRANSCRIPTION_SYSTEM_INSTRUCTION,
   );
-  const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({
+  const ai = getGeminiClient();
+
+  const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
-    systemInstruction,
-    generationConfig: {
-      // Gemini 2.5 thinking tokens count against this budget; one dense page
-      // of prose lands well under 1k output tokens, the rest is headroom.
+    config: {
+      systemInstruction,
       maxOutputTokens: 4096,
     },
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType,
+              data: imageBase64,
+            },
+          },
+          { text: "Please transcribe this handwritten student work." },
+        ],
+      },
+    ],
   });
 
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        mimeType,
-        data: imageBase64,
-      },
-    },
-    { text: "Please transcribe this handwritten student work." },
-  ]);
-
-  const response = result.response;
-  return response.text();
+  return response.text ?? "";
 }
