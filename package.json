@@ -17,7 +17,7 @@
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.100.1",
     "clsx": "^2.1.1",
-    "googleapis": "^171.4.0",
+    "googleapis": "^172.0.0",
     "heic2any": "^0.0.4",
     "inngest": "^4.4.0",
     "lucide-react": "^1.7.0",
