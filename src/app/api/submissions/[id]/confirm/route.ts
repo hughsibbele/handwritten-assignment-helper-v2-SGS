@@ -181,7 +181,11 @@ export async function POST(
     const dateStr = new Date().toISOString().slice(0, 10);
     const attemptNumber = (submission as unknown as { attempt_number: number }).attempt_number ?? 1;
     const attemptSuffix = attemptNumber > 1 ? ` (Resubmission ${attemptNumber})` : "";
-    const docTitle = `${assignment.title} - ${student.display_name}${attemptSuffix} (${dateStr})`;
+    // M7.6: {assignment} – {date} – {course} (en-dashes, suite convention).
+    // Drops student name — the folder is already per-student so it's redundant.
+    // Adds course so titles stay legible after the folder is moved into a
+    // teacher's shared multi-student space.
+    const docTitle = `${assignment.title} – ${dateStr} – ${courseShortName}${attemptSuffix}`;
     const { docId, docUrl } = await createGoogleDoc(
       googleClient,
       docTitle,

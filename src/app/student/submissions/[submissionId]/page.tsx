@@ -244,6 +244,23 @@ function SuccessPanel({
         </div>
       </div>
 
+      {submission.gdoc_url && (
+        <div className="rounded-lg border border-light-blue bg-light-blue/30 p-4 text-sm">
+          <p className="font-medium text-dark-blue">
+            Want this in your teacher&rsquo;s shared folder?
+          </p>
+          <p className="mt-1 text-cool-gray">
+            Your Doc is in a folder in your own Google Drive (named for
+            your course and last name). Open Drive, find that folder,
+            and drag it into your teacher&rsquo;s shared course folder
+            if they have one. Every future upload for this class will
+            appear there too — you only have to move it once. If you
+            accidentally delete the folder, we&rsquo;ll make a new one
+            on your next upload.
+          </p>
+        </div>
+      )}
+
       {/* Transcription preview */}
       <div className="rounded-lg border p-4">
         <p className="mb-2 text-sm font-medium">Your transcription:</p>
