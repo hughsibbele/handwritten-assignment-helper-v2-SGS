@@ -122,7 +122,7 @@ export function RetentionPanel() {
 
       <Card className="border-destructive/40">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-destructive">
+          <CardTitle className="flex items-center gap-2 text-base text-red-600">
             <AlertTriangle className="h-4 w-4" />
             Hard delete
           </CardTitle>

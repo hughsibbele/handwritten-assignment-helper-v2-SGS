@@ -22,7 +22,7 @@ export default async function StudentLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-paper">
       <BrandHeader
         eyebrow="Handwritten Helper"
         logoHref="/student/dashboard"

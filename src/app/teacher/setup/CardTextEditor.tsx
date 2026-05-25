@@ -160,7 +160,7 @@ export function CardTextEditor({
               {status !== "idle" &&
                 status !== "saving" &&
                 status !== "saved" && (
-                  <span className="text-sm text-destructive">
+                  <span className="text-sm text-red-600">
                     Error: {status}
                   </span>
                 )}

@@ -1,49 +1,65 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { getCurrentTeacher } from "@/lib/auth/teacher";
 import { getCurrentAdminEmail } from "@/lib/auth/admin";
+import { BrandHeader } from "@/components/brand/BrandHeader";
+import { SignOutButton } from "@/components/layout/SignOutButton";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const teacher = await getCurrentTeacher();
   const email = await getCurrentAdminEmail();
   if (!email) redirect("/");
 
+  const nav = (
+    <nav className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">
+      <Link
+        href="/admin/prompts"
+        className="text-ink transition-colors hover:text-dark-blue"
+      >
+        Prompts
+      </Link>
+      <Link
+        href="/admin/card-text"
+        className="text-ink transition-colors hover:text-dark-blue"
+      >
+        Card text
+      </Link>
+      <Link
+        href="/admin/retention"
+        className="text-ink transition-colors hover:text-dark-blue"
+      >
+        Retention
+      </Link>
+      <Link
+        href="/teacher/dashboard"
+        className="text-cool-gray transition-colors hover:text-maroon"
+      >
+        ← Dashboard
+      </Link>
+      <span className="text-xs italic text-cool-gray" title={email}>
+        {teacher?.display_name ?? email}
+      </span>
+      <SignOutButton />
+    </nav>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-cool-gray">
-            Admin
-          </p>
-          <h1 className="text-2xl font-bold">Handwritten Helper</h1>
-        </div>
-        <nav className="flex gap-2">
-          <Link href="/admin/prompts">
-            <Button variant="ghost" size="sm">
-              Prompts
-            </Button>
-          </Link>
-          <Link href="/admin/card-text">
-            <Button variant="ghost" size="sm">
-              Card text
-            </Button>
-          </Link>
-          <Link href="/admin/retention">
-            <Button variant="ghost" size="sm">
-              Retention
-            </Button>
-          </Link>
-          <Link href="/teacher/dashboard">
-            <Button variant="outline" size="sm">
-              Back to dashboard
-            </Button>
-          </Link>
-        </nav>
-      </div>
-      {children}
+    <div className="flex min-h-screen flex-col bg-paper">
+      <BrandHeader
+        logoHref="/admin/prompts"
+        ruleClassName="h-0.5 border-0 bg-dark-blue"
+        right={nav}
+      />
+
+      <main className="flex-1 px-6 py-8">{children}</main>
+
+      <footer className="border-t border-light-blue/40 bg-white/50 px-6 py-3 text-center text-xs italic text-cool-gray">
+        Handwritten Helper &middot; Admin &middot; Episcopal High School
+      </footer>
     </div>
   );
 }

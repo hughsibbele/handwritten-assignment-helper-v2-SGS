@@ -81,7 +81,7 @@ export function CardTextDefaultsEditor({
         <CardDescription>
           What teachers see as the placeholder fallback per field. Each
           teacher can override any subset on their own{" "}
-          <code className="rounded bg-muted px-1">/teacher/setup</code>{" "}
+          <code className="rounded bg-paper px-1">/teacher/setup</code>{" "}
           page; changes here apply to anyone who hasn&apos;t overridden the
           field. Updated {new Date(initial.updated_at).toLocaleDateString()}.
         </CardDescription>
@@ -128,7 +128,7 @@ export function CardTextDefaultsEditor({
               {status !== "idle" &&
                 status !== "saving" &&
                 status !== "saved" && (
-                  <span className="text-sm text-destructive">
+                  <span className="text-sm text-red-600">
                     Error: {status}
                   </span>
                 )}

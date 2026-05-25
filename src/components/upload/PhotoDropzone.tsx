@@ -119,8 +119,8 @@ export function PhotoDropzone({
         {...getRootProps()}
         className={`flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
           isDragActive
-            ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25 hover:border-primary/50"
+            ? "border-maroon bg-maroon/5"
+            : "border-muted-foreground/25 hover:border-maroon/50"
         } ${disabled ? "pointer-events-none opacity-50" : ""}`}
       >
         <input {...getInputProps()} />
@@ -186,7 +186,7 @@ export function PhotoDropzone({
           </DndContext>
 
           {previews.length > 1 && (
-            <div className="flex items-center justify-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm font-medium text-secondary-foreground">
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-light-blue/50 px-3 py-2 text-sm font-medium text-cool-gray">
               <GripVertical className="h-4 w-4" />
               Drag photos to reorder pages
             </div>
@@ -312,7 +312,7 @@ function SortablePhoto({
   return (
     <div ref={setNodeRef} style={style} className="relative">
       <div
-        className={`aspect-[3/4] overflow-hidden rounded-lg border bg-muted ${
+        className={`aspect-[3/4] overflow-hidden rounded-lg border bg-paper ${
           isDragging ? "ring-2 ring-primary" : ""
         }`}
       >
@@ -325,14 +325,14 @@ function SortablePhoto({
       </div>
 
       {/* Page number badge */}
-      <div className="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+      <div className="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-maroon text-xs font-bold text-white">
         {index + 1}
       </div>
 
       {/* Remove button — always visible (no hover trick, works on touch) */}
       <button
         onClick={() => onRemove(preview.id)}
-        className="absolute -right-2 -top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground"
+        className="absolute -right-2 -top-2 rounded-full bg-red-600 p-1.5 text-red-600-foreground"
         aria-label={`Remove page ${index + 1}`}
       >
         <X className="h-3 w-3" />

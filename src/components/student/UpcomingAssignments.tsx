@@ -71,7 +71,7 @@ export function UpcomingAssignments({
 
             return (
               <li key={a.id}>
-                <div className="rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                <div className="rounded-lg border p-3 transition-colors hover:bg-paper/50">
                   <Link href={primaryHref} className="block">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-medium">{a.title}</p>

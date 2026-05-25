@@ -91,7 +91,7 @@ export function TeacherGuide() {
             </p>
           </section>
 
-          <section className="rounded-md border border-border bg-muted/50 p-3">
+          <section className="rounded-md border border-light-blue bg-paper/50 p-3">
             <h3 className="mb-1 font-semibold text-ink">
               Tips
             </h3>

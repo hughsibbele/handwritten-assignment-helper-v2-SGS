@@ -301,7 +301,7 @@ export default function AssignmentUploadPage() {
         </CardHeader>
         <CardContent>
           {isResubmission && (
-            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+            <div className="mb-4 rounded-lg border border-maroon/20 bg-maroon/5 p-3 text-sm">
               Starting a new submission. Your previous submission will remain
               unchanged.
             </div>

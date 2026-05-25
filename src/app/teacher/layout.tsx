@@ -27,28 +27,28 @@ export default async function TeacherLayout({
   const viewerIsAdmin = teacher ? await isAdmin() : false;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-paper">
       <BrandHeader
-        eyebrow="Handwritten Helper · Teacher"
+        eyebrow="Handwritten Helper"
         logoHref="/teacher/dashboard"
         right={
-          <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-sm">
+          <nav className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">
             <Link
               href="/teacher/dashboard"
-              className="text-cool-gray transition-colors hover:text-ink"
+              className="text-ink transition-colors hover:text-maroon"
             >
               Dashboard
             </Link>
             <Link
               href="/teacher/setup"
-              className="text-cool-gray transition-colors hover:text-ink"
+              className="text-ink transition-colors hover:text-maroon"
             >
-              Canvas &amp; Drive setup
+              Canvas &amp; Drive
             </Link>
             {viewerIsAdmin && (
               <Link
                 href="/admin/prompts"
-                className="rounded-sm border border-maroon/40 px-2 py-0.5 text-xs font-medium text-maroon transition-colors hover:bg-maroon hover:text-white"
+                className="rounded-sm border border-dark-blue/40 px-2 py-0.5 text-xs font-medium text-dark-blue transition-colors hover:bg-dark-blue hover:text-white"
                 title="School-wide admin console"
               >
                 Admin →

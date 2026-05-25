@@ -1,16 +1,7 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
-/* EHS brand tokens — additive M4.12. AID uses these explicit names
- * (text-maroon, text-ink, text-cool-gray, bg-paper, border-dark-blue)
- * across student + dashboard + admin surfaces; ported here so the shared
- * BrandHeader component works identically in HAH. The shadcn semantic
- * tokens below (text-primary, text-foreground, etc.) remain in place for
- * the existing component tree; M4.12(c) lays the rails for a future
- * per-component migration to the EHS names. */
+/* EHS brand tokens — canonical palette shared across the super-grader
+ * suite. These values mirror the school style guide. */
 @theme {
   --color-maroon: #7a1e46;
   --color-maroon-dark: #5a1535;
@@ -20,138 +11,36 @@
   --color-dark-blue-dark: #004f6e;
   --color-paper: #fafaf7;
   --color-ink: #1a1a1a;
-}
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-lora);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-display: var(--font-lora), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-lora), Georgia, "Times New Roman", serif;
+  --font-document: Georgia, "Times New Roman", serif;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: #54565b;
-  --card: oklch(1 0 0);
-  --card-foreground: #54565b;
-  --popover: oklch(1 0 0);
-  --popover-foreground: #54565b;
-  --primary: #7a1e46;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: #C4DCEB;
-  --secondary-foreground: #54565b;
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: #54565b;
-  --accent: #C4DCEB;
-  --accent-foreground: #54565b;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #7a1e46;
-  --chart-1: #7a1e46;
-  --chart-2: #006890;
-  --chart-3: #C4DCEB;
-  --chart-4: #54565b;
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: #54565b;
-  --sidebar-primary: #7a1e46;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #C4DCEB;
-  --sidebar-accent-foreground: #54565b;
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: #7a1e46;
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  color-scheme: light;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.92 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.92 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.92 0 0);
-  --primary: #9b3060;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: #9b3060;
-  --chart-1: #9b3060;
-  --chart-2: #006890;
-  --chart-3: #C4DCEB;
-  --chart-4: oklch(0.708 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #9b3060;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #9b3060;
+html, body {
+  height: 100%;
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
-  h1, h2, h3, h4 {
-    font-family: var(--font-heading);
-  }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-feature-settings: "kern", "liga", "calt";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* EHS editorial ornaments — ported from AID (M4.12). Used by BrandHeader
- * and the "AI USE REFLECTION ·" eyebrow strips on student-facing surfaces. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
+
+/* EHS editorial ornaments — shared across the suite. */
 .ehs-rule {
   display: block;
   height: 1px;
@@ -165,10 +54,17 @@
   border: 0;
 }
 .ehs-eyebrow {
-  font-family: var(--font-heading);
+  font-family: var(--font-document);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-cool-gray);
+}
+
+/* Focus rings — maroon at 60% opacity, no blue browser default. */
+*:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--color-maroon) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }

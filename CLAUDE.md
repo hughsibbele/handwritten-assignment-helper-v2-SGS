@@ -10,7 +10,7 @@ Web app for Episcopal High School students to upload photos of handwritten work,
 - Supabase (Postgres, Auth, Storage, Realtime)
 - Gemini 2.5 Flash (handwriting transcription)
 - Inngest v4 (background job orchestration)
-- Tailwind CSS + shadcn/ui
+- Tailwind CSS v4
 - Google APIs (Drive, Docs) for document creation
 - Deploy target: Vercel
 
@@ -86,10 +86,11 @@ CREATE POLICY "..." ON public.your_table FOR ... TO authenticated USING (...);
 Same rule for new helper functions: `GRANT EXECUTE ... TO authenticated, service_role`, with an explicit `REVOKE EXECUTE ... FROM anon` if the function ends up in the `public` schema. Supabase auto-grants EXECUTE to `anon` on every new public function and its `REVOKE ... FROM PUBLIC` doesn't clear role-specific grants, so the explicit revoke is the safe pattern.
 
 ## Branding
-- EHS Maroon: `#7a1e46`, EHS Gray: `#54565b`, Light Blue: `#C4DCEB`, Dark Blue: `#006890`
-- Headings: Lora (serif). Body: Geist Sans.
-- Logo: `/public/ehs-logo.webp`
-- Style guide: https://www.episcopalhighschool.org/ehs-style-guide
+Canonical EHS palette shared across the suite (M6.12, 2026-05-25):
+- Maroon: `#7a1e46`, Maroon Dark: `#5a1535`, Cool Gray: `#54565b`, Light Blue: `#c4dceb`, Dark Blue: `#006890`, Paper: `#fafaf7`, Ink: `#1a1a1a`
+- Headings + body: Lora (serif, loaded via `next/font/google`), Georgia fallback
+- Logo: `/public/brand/ehs-horizontal.webp` (used by `BrandHeader`)
+- UI components in `src/components/ui/` are plain Tailwind wrappers — no shadcn, no `@base-ui/react`, no `class-variance-authority`
 
 ## Status
 

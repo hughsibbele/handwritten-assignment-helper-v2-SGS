@@ -152,9 +152,9 @@ function PizzaTracker({ steps }: { steps: TrackerStep[] }) {
               className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all duration-500",
                 step.status === "completed" &&
-                  "bg-primary text-primary-foreground",
+                  "bg-maroon text-white",
                 step.status === "active" &&
-                  "border-2 border-primary text-maroon animate-pulse",
+                  "border-2 border-maroon text-maroon animate-pulse",
                 step.status === "upcoming" &&
                   "border-2 border-muted-foreground/30 text-cool-gray/50"
               )}
@@ -182,8 +182,8 @@ function PizzaTracker({ steps }: { steps: TrackerStep[] }) {
               className={cn(
                 "mt-4 h-0.5 flex-1 transition-colors duration-500",
                 step.status === "completed"
-                  ? "bg-primary"
-                  : "bg-muted-foreground/20"
+                  ? "bg-maroon"
+                  : "bg-cool-gray/20"
               )}
             />
           )}
@@ -272,14 +272,14 @@ function SuccessPanel({
         <div className="flex gap-2">
           <Link
             href="/student/dashboard"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-light-blue bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-paper"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Link>
           <Link
             href={resubmitHref}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-muted"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-light-blue bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-paper"
           >
             <RotateCcw className="h-4 w-4" />
             Resubmit
@@ -620,7 +620,7 @@ export default function SubmissionPage() {
                     )}
                     Page {p.page_number}
                     {p.status === "failed" && (
-                      <span className="text-destructive">(failed)</span>
+                      <span className="text-red-600">(failed)</span>
                     )}
                   </div>
                 ))}

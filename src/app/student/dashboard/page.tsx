@@ -183,7 +183,7 @@ export default async function StudentDashboard() {
                   <li key={s.id}>
                     <Link
                       href={`/student/submissions/${s.id}`}
-                      className="block rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                      className="block rounded-lg border p-3 transition-colors hover:bg-paper/50"
                     >
                       <div className="flex items-center justify-between">
                         <p className="font-medium">
