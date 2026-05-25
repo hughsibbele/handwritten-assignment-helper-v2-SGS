@@ -94,9 +94,9 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
         >
           <Chevron open={open} />
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-stone-900">
+            <div className="truncate text-sm text-ink">
               {group.short_name && (
-                <span className="mr-2 text-stone-500">{group.short_name}</span>
+                <span className="mr-2 font-semibold text-maroon">{group.short_name}</span>
               )}
               {group.name}
             </div>

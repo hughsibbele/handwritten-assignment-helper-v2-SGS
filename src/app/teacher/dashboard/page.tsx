@@ -162,7 +162,7 @@ export default async function TeacherDashboard() {
       <BackgroundSync courses={syncCandidates} />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
+        <h1 className="text-2xl font-medium text-ink">Teacher Dashboard</h1>
         <div className="flex gap-2">
           <TeacherGuide />
           <Link href="/setup">

@@ -50,6 +50,7 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen flex-col bg-paper">
       <BrandHeader
+        title="Handwritten Assignment Helper"
         logoHref="/admin/prompts"
         ruleClassName="h-0.5 border-0 bg-dark-blue"
         right={nav}
@@ -58,7 +59,7 @@ export default async function AdminLayout({
       <main className="flex-1 px-6 py-8">{children}</main>
 
       <footer className="border-t border-light-blue/40 bg-white/50 px-6 py-3 text-center text-xs italic text-cool-gray">
-        Handwritten Helper &middot; Admin &middot; Episcopal High School
+        Handwritten Assignment Helper &middot; Admin &middot; Episcopal High School
       </footer>
     </div>
   );

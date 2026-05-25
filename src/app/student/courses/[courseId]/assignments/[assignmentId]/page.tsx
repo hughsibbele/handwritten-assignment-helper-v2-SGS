@@ -321,7 +321,7 @@ export default function AssignmentUploadPage() {
               </div>
               <p className="text-amber-900/90 dark:text-amber-200/90">
                 Your teacher set this assignment to auto-submit through
-                Handwritten Helper, but the Canvas assignment isn&apos;t
+                Handwritten Assignment Helper, but the Canvas assignment isn&apos;t
                 configured to accept text submissions. Please ask your teacher
                 to update the Canvas assignment to allow &quot;Text Entry,&quot;
                 or submit your handwritten work directly in Canvas.

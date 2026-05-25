@@ -96,7 +96,7 @@ export default async function TeacherSetupPage() {
           </p>
         ) : (
           <p className="text-sm text-cool-gray">
-            Welcome to Handwritten Helper. Paste your Canvas URL + API token
+            Welcome to Handwritten Assignment Helper. Paste your Canvas URL + API token
             below to get started — saving the connection promotes your
             account to a teacher and unlocks the rest of setup.
           </p>
