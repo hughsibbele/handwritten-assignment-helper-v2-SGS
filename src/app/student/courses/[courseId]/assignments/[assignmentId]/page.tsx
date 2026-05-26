@@ -4,15 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PhotoDropzone } from "@/components/upload/PhotoDropzone";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Loader2, CheckCircle2, RotateCcw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -224,17 +215,17 @@ export default function AssignmentUploadPage() {
   if (pageState === "already-submitted" && existingSub) {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <Card>
-          <CardHeader>
+        <div className="rounded-md border border-stone-200 bg-white">
+          <div className="px-5 pt-5">
             <div className="flex items-center gap-2">
-              <CardTitle>{assignment.title}</CardTitle>
-              <Badge variant="default">Submitted</Badge>
+              <div className="text-base font-medium text-ink leading-snug">{assignment.title}</div>
+              <span className="shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white">Submitted</span>
             </div>
-            <CardDescription>
+            <div className="mt-1 text-sm text-stone-500">
               {(assignment.course as unknown as { name: string })?.name}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </div>
+          </div>
+          <div className="px-5 space-y-4">
             <div className="rounded-lg border bg-green-50 p-4 text-center dark:bg-green-950/20">
               <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-600" />
               <p className="font-medium">
@@ -244,20 +235,20 @@ export default function AssignmentUploadPage() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link
                 href={`/student/submissions/${existingSub.id}`}
-                className={buttonVariants({ variant: "outline", className: "flex-1" })}
+                className="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50 flex-1"
               >
                 View Submission
               </Link>
               <Link
                 href={`/student/courses/${courseId}/assignments/${assignmentId}?resubmit=true`}
-                className={buttonVariants({ className: "flex-1" })}
+                className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50 flex-1"
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Resubmit
               </Link>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -274,22 +265,22 @@ export default function AssignmentUploadPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <Card>
-        <CardHeader>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
           <div className="flex items-center gap-2">
-            <CardTitle>{assignment.title}</CardTitle>
+            <div className="text-base font-medium text-ink leading-snug">{assignment.title}</div>
             {isResubmission && (
-              <Badge variant="secondary">
+              <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
                 Resubmission {existingSub?.attempt_number ?? 2}
-              </Badge>
+              </span>
             )}
             {!isResubmission && assignment.due_date && (
-              <Badge variant="outline">
+              <span className="shrink-0 rounded-full border border-stone-300 px-2 py-0.5 text-xs text-stone-500">
                 Due {new Date(assignment.due_date).toLocaleDateString()}
-              </Badge>
+              </span>
             )}
           </div>
-          <CardDescription>
+          <div className="mt-1 text-sm text-stone-500">
             {(assignment.course as unknown as { name: string })?.name}
             {isResubmission && assignment.due_date && (
               <span className="ml-2">
@@ -297,9 +288,9 @@ export default function AssignmentUploadPage() {
                 {new Date(assignment.due_date).toLocaleDateString()}
               </span>
             )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div className="px-5">
           {isResubmission && (
             <div className="mb-4 rounded-lg border border-maroon/20 bg-maroon/5 p-3 text-sm">
               Starting a new submission. Your previous submission will remain
@@ -342,8 +333,8 @@ export default function AssignmentUploadPage() {
               )}
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

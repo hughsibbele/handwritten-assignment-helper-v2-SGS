@@ -2,9 +2,6 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { sortByProximity } from "@/lib/assignment-sort";
@@ -112,21 +109,20 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
         </button>
         <div className="flex shrink-0 items-center gap-2">
           {group.installedCount > 0 && (
-            <Badge variant="secondary" className="text-[11px]">
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
               {group.installedCount} installed
-            </Badge>
+            </span>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            className="rounded-md px-2 py-1 text-xs text-stone-600 hover:bg-stone-100 disabled:opacity-50"
             onClick={handleResync}
             disabled={syncing}
           >
             <RefreshCw
-              className={`mr-1 h-3 w-3 ${syncing ? "animate-spin" : ""}`}
+              className={`mr-1 inline h-3 w-3 ${syncing ? "animate-spin" : ""}`}
             />
             {syncing ? "Syncing…" : "Re-sync"}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -152,11 +148,11 @@ export function CourseAccordion({ group }: { group: CourseGroup }) {
               <div className="flex items-center gap-2 border-b border-stone-100 px-4 py-2">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
-                  <Input
+                  <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search assignments…"
-                    className="pl-8"
+                    className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 pl-8 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
                   />
                 </div>
                 <span className="text-[11px] text-stone-500">
@@ -239,15 +235,15 @@ function AssignmentRowItem({
             <span>Due {new Date(assignment.due_date).toLocaleDateString()}</span>
           )}
           {isDiscussion && (
-            <Badge variant="outline" className="text-[10px]">
+            <span className="shrink-0 rounded-full border border-stone-300 px-2 py-0.5 text-[10px] text-stone-500">
               Discussion
-            </Badge>
+            </span>
           )}
           {assignment.installed ? (
             <>
-              <Badge variant="secondary" className="text-[10px]">
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
                 Card installed
-              </Badge>
+              </span>
               <a
                 href={`/student/courses/${courseId}/assignments/${assignment.id}`}
                 target="_blank"
@@ -261,12 +257,12 @@ function AssignmentRowItem({
             <span className="text-stone-400">Not installed</span>
           )}
           {assignment.inSuperGraderScope && (
-            <Badge
-              className="bg-[#7a1e46] text-[10px] text-white hover:bg-[#7a1e46]"
+            <span
+              className="shrink-0 rounded-full bg-[#7a1e46] px-2 py-0.5 text-[10px] font-medium text-white"
               title="This assignment is tracked in super-grader. HAH still writes to Drive, but skips its own Canvas submit — super-grader owns the final post."
             >
               ↗ super-grader
-            </Badge>
+            </span>
           )}
           {canInstall && (
             <span

@@ -2,16 +2,6 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 /**
@@ -88,34 +78,36 @@ export function CanvasConnectionSection({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="rounded-md border border-stone-200 bg-white">
+      <div className="px-5 pt-5">
+        <div className="text-base font-medium text-ink leading-snug flex items-center gap-2">
           {isConfigured && (
             <CheckCircle2 className="h-5 w-5 text-green-600" />
           )}
           Canvas connection
-        </CardTitle>
-        <CardDescription>
+        </div>
+        <div className="mt-1 text-sm text-stone-500">
           Enter your school&apos;s Canvas URL and your personal API token.
           Generate a token in Canvas under Account &gt; Settings &gt; New
           Access Token.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </div>
+      </div>
+      <div className="px-5 space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="canvas-url">Canvas URL</Label>
-          <Input
+          <label htmlFor="canvas-url" className="text-sm font-medium">Canvas URL</label>
+          <input
             id="canvas-url"
+            className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
             placeholder="https://yourschool.instructure.com"
             value={canvasUrl}
             onChange={(e) => setCanvasUrl(e.target.value)}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="canvas-token">API token</Label>
-          <Input
+          <label htmlFor="canvas-token" className="text-sm font-medium">API token</label>
+          <input
             id="canvas-token"
+            className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
             type="password"
             placeholder="Paste your Canvas API token"
             value={canvasToken}
@@ -123,24 +115,25 @@ export function CanvasConnectionSection({
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
+          <button
+            className="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
             onClick={handleTestCanvas}
             disabled={testing || saving || !canvasUrl || !canvasToken}
           >
             {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Test connection
-          </Button>
-          <Button
+          </button>
+          <button
+            className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50"
             onClick={handleSaveCanvas}
             disabled={saving || testing || !canvasUrl || !canvasToken}
           >
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Canvas config
-          </Button>
+          </button>
         </div>
 
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

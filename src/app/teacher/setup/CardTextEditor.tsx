@@ -2,17 +2,6 @@
 
 import { useState, useTransition } from "react";
 import type { HandwrittenCardText } from "@/lib/canvas/install";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { CardPreview } from "@/components/card-text/CardPreview";
 import {
@@ -93,17 +82,17 @@ export function CardTextEditor({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Canvas card text</CardTitle>
-        <CardDescription>
+    <div className="rounded-md border border-stone-200 bg-white">
+      <div className="px-5 pt-5">
+        <div className="text-base font-medium text-ink leading-snug">Canvas card text</div>
+        <div className="mt-1 text-sm text-stone-500">
           The wording inside the branded card students see in Canvas. Leave
           a field blank to inherit the school-wide default. Changes apply
           to <strong>future installs</strong> — already-installed cards
           keep the old text until you re-install (uninstall + install).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </div>
+      </div>
+      <div className="px-5">
         <div className="grid gap-6 lg:grid-cols-2">
           <form action={handleSave} className="space-y-4">
             <Field
@@ -148,12 +137,12 @@ export function CardTextEditor({
               onReset={() => handleReset("card_footnote", setFootnote)}
             />
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={status === "saving"}>
+              <button type="submit" disabled={status === "saving"} className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50">
                 {status === "saving" && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 Save card text
-              </Button>
+              </button>
               {status === "saved" && (
                 <span className="text-sm text-green-700">Saved.</span>
               )}
@@ -175,8 +164,8 @@ export function CardTextEditor({
             </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -201,7 +190,7 @@ function Field({
   return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between gap-3">
-        <Label htmlFor={`teacher-${field}`}>{label}</Label>
+        <label htmlFor={`teacher-${field}`} className="text-sm font-medium">{label}</label>
         {overriding && (
           <button
             type="button"
@@ -213,21 +202,23 @@ function Field({
         )}
       </div>
       {multiline ? (
-        <Textarea
+        <textarea
           id={`teacher-${field}`}
           name={field}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           rows={4}
           placeholder={placeholder}
+          className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm leading-snug focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
         />
       ) : (
-        <Input
+        <input
           id={`teacher-${field}`}
           name={field}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
+          className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
         />
       )}
       <p className="text-xs text-cool-gray">

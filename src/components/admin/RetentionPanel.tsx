@@ -1,16 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2, Download, Trash2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,76 +67,78 @@ export function RetentionPanel() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filter (optional)</CardTitle>
-          <CardDescription>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug">Filter (optional)</div>
+          <div className="mt-1 text-sm text-stone-500">
             Limit export and delete to submissions older than this date. Leave
             blank to act on every submission in the database.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div className="px-5">
           <div className="grid max-w-sm gap-2">
-            <Label htmlFor="beforeDate">Created before</Label>
-            <Input
+            <label htmlFor="beforeDate" className="text-sm font-medium">Created before</label>
+            <input
               id="beforeDate"
               type="date"
               value={beforeDate}
               onChange={(e) => setBeforeDate(e.target.value)}
+              className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Export</CardTitle>
-          <CardDescription>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug">Export</div>
+          <div className="mt-1 text-sm text-stone-500">
             Downloads a CSV including transcription text, Canvas submission
             text, Google Doc URL, page count, status, and timestamps for each
             submission in scope. UTF-8 BOM prepended so Excel-on-Windows
             imports cleanly.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleExport} disabled={exporting}>
+          </div>
+        </div>
+        <div className="px-5">
+          <button onClick={handleExport} disabled={exporting} className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50">
             {exporting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Download className="mr-2 h-4 w-4" />
             )}
             Download CSV
-          </Button>
-        </CardContent>
-      </Card>
+          </button>
+        </div>
+      </div>
 
-      <Card className="border-destructive/40">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base text-red-600">
+      <div className="rounded-md border border-stone-200 bg-white border-destructive/40">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug flex items-center gap-2 text-red-600">
             <AlertTriangle className="h-4 w-4" />
             Hard delete
-          </CardTitle>
-          <CardDescription>
+          </div>
+          <div className="mt-1 text-sm text-stone-500">
             Permanently removes submissions, their photos, and the linked
             storage objects. Irreversible. Export first if you want a record.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div className="px-5">
           <div className="grid max-w-sm gap-2">
-            <Label htmlFor="confirm">
+            <label htmlFor="confirm" className="text-sm font-medium">
               Type <span className="font-mono">DELETE</span> to confirm
-            </Label>
-            <Input
+            </label>
+            <input
               id="confirm"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="DELETE"
               autoComplete="off"
+              className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
             />
-            <Button
-              variant="destructive"
+            <button
               onClick={handleDelete}
               disabled={deleting || confirm !== "DELETE"}
+              className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
             >
               {deleting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -156,10 +148,10 @@ export function RetentionPanel() {
               {beforeDate
                 ? `Delete everything before ${beforeDate}`
                 : "Delete everything"}
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </>
   );
 }

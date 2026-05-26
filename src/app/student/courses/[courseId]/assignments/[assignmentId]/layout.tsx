@@ -2,14 +2,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerDbClient } from "@/lib/supabase/server";
 import { createAdminDbClient } from "@/lib/supabase/admin";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
 
 // Server-side gate for student upload pages reached via the Canvas card.
 // Verifies (a) signed-in, (b) we have a `students` row for this email, and
@@ -121,17 +113,17 @@ function NoticeCard({
 }) {
   return (
     <div className="mx-auto max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{body}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/student/dashboard" className={buttonVariants({ variant: "outline" })}>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug">{title}</div>
+          <div className="mt-1 text-sm text-stone-500">{body}</div>
+        </div>
+        <div className="px-5">
+          <Link href="/student/dashboard" className="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50">
             Back to your dashboard
           </Link>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

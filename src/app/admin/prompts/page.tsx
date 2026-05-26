@@ -1,11 +1,4 @@
 import { createAdminDbClient } from "@/lib/supabase/admin";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { PromptEditor } from "@/components/admin/PromptEditor";
 import { AutoSaveProvider } from "@/components/auto-save/context";
 
@@ -30,22 +23,22 @@ export default async function AdminPromptsPage() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Prompts</CardTitle>
-          <CardDescription>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug">Prompts</div>
+          <div className="mt-1 text-sm text-stone-500">
             Edit the prompts the app sends to Gemini. Changes propagate within
             ~10 minutes (in-process cache TTL). The version number bumps on
             every save so you can audit drift.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+          </div>
+        </div>
+      </div>
       {prompts.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-cool-gray">
+        <div className="rounded-md border border-stone-200 bg-white">
+          <div className="px-5 py-8 text-center text-sm text-cool-gray">
             No prompts found. Re-run migration 021 to seed the OCR prompt.
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <AutoSaveProvider>
           {prompts.map((p) => (

@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerDbClient } from "@/lib/supabase/server";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
 import { BackgroundSync } from "@/components/teacher/BackgroundSync";
 import { TeacherGuide } from "@/components/teacher/TeacherGuide";
 import { termIsCurrent } from "@/lib/academic-year";
@@ -158,25 +155,19 @@ export default async function TeacherDashboard() {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl space-y-4">
       <BackgroundSync courses={syncCandidates} />
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-medium text-ink">Teacher Dashboard</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h1 className="text-xl font-medium text-ink">Your courses</h1>
+        <div className="flex items-center gap-2">
           <TeacherGuide />
-          <Link href="/setup">
-            <Button variant="outline" size="sm">
-              <Settings className="mr-1 h-4 w-4" />
-              Setup
-            </Button>
-          </Link>
         </div>
       </div>
 
       {activeGroups.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center">
+        <div className="rounded-md border border-stone-200 bg-white">
+          <div className="px-5 py-8 text-center">
             <p className="text-cool-gray">
               No active-term courses synced yet.{" "}
               <Link
@@ -193,10 +184,10 @@ export default async function TeacherDashboard() {
                 hidden by the active-term filter.)
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {activeGroups.map((g) => (
             <CourseAccordion key={g.id} group={g} />
           ))}

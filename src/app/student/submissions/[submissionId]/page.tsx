@@ -4,18 +4,8 @@ import { Fragment, useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { toast } from "sonner";
+
 import {
   CheckCircle2,
   Loader2,
@@ -245,7 +235,7 @@ function SuccessPanel({
       </div>
 
       {submission.gdoc_url && (
-        <div className="rounded-lg border border-light-blue bg-light-blue/30 p-4 text-sm">
+        <div className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-sm">
           <p className="font-medium text-dark-blue">
             Want this in your teacher&rsquo;s shared folder?
           </p>
@@ -272,14 +262,14 @@ function SuccessPanel({
         <div className="flex gap-2">
           <Link
             href="/student/dashboard"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-light-blue bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-paper"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm font-medium hover:bg-stone-50"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Link>
           <Link
             href={resubmitHref}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-light-blue bg-paper px-2.5 py-1.5 text-sm font-medium hover:bg-paper"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-sm font-medium hover:bg-stone-50"
           >
             <RotateCcw className="h-4 w-4" />
             Resubmit
@@ -541,30 +531,29 @@ export default function SubmissionPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <Card>
-        <CardHeader>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>{submission.assignment?.title}</CardTitle>
-              <CardDescription>
+              <div className="text-base font-medium text-ink leading-snug">{submission.assignment?.title}</div>
+              <div className="mt-1 text-sm text-stone-500">
                 {submission.assignment?.course?.name}
-              </CardDescription>
+              </div>
             </div>
             <StatusBadge status={submission.status} />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        </div>
+        <div className="px-5 space-y-6">
           {/* Pizza Tracker */}
           <PizzaTracker steps={trackerSteps} />
 
-          <Separator />
+          <hr className="ehs-rule" />
 
           {/* Start Over button — available during in-progress states */}
           {canResetOrStartOver && (
             <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                className="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
                 onClick={handleReset}
                 disabled={resetting}
               >
@@ -574,7 +563,7 @@ export default function SubmissionPage() {
                   <RotateCcw className="mr-2 h-4 w-4" />
                 )}
                 Start Over
-              </Button>
+              </button>
             </div>
           )}
 
@@ -586,7 +575,7 @@ export default function SubmissionPage() {
               </p>
               <Link
                 href={`/student/courses/${courseId}/assignments/${assignmentId}`}
-                className={buttonVariants()}
+                className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50"
               >
                 Go to Upload
               </Link>
@@ -631,11 +620,11 @@ export default function SubmissionPage() {
                 Review and edit the transcription below. Fix any errors, then
                 click Confirm to save it as a Google Doc.
               </p>
-              <Textarea
+              <textarea
+                className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm leading-snug focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50 min-h-[200px] font-mono sm:min-h-[400px]"
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
                 rows={10}
-                className="min-h-[200px] font-mono text-sm sm:min-h-[400px]"
               />
 
               {/* Canvas submission toggle — hidden for non-Canvas students */}
@@ -663,10 +652,10 @@ export default function SubmissionPage() {
                 </label>
               )}
 
-              <Button
+              <button
+                className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50 w-full"
                 onClick={handleConfirm}
                 disabled={confirming || !editedText.trim()}
-                className="w-full"
               >
                 {confirming ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -674,7 +663,7 @@ export default function SubmissionPage() {
                   <CheckCircle2 className="mr-2 h-4 w-4" />
                 )}
                 Confirm & Create Google Doc
-              </Button>
+              </button>
             </>
           )}
 
@@ -686,8 +675,8 @@ export default function SubmissionPage() {
               resubmitHref={resubmitHref}
             />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -697,20 +686,17 @@ export default function SubmissionPage() {
 // ---------------------------------------------------------------------------
 
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<
-    string,
-    { variant: "default" | "secondary" | "outline"; label: string }
-  > = {
-    draft: { variant: "secondary", label: "Draft" },
-    processing: { variant: "outline", label: "Transcribing..." },
-    review: { variant: "default", label: "Ready for Review" },
-    confirmed: { variant: "default", label: "Confirmed" },
-    submitted: { variant: "default", label: "Submitted" },
+  const config: Record<string, { className: string; label: string }> = {
+    draft: { className: "shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800", label: "Draft" },
+    processing: { className: "shrink-0 rounded-full border border-stone-300 px-2 py-0.5 text-xs text-stone-500", label: "Transcribing..." },
+    review: { className: "shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white", label: "Ready for Review" },
+    confirmed: { className: "shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white", label: "Confirmed" },
+    submitted: { className: "shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white", label: "Submitted" },
   };
 
-  const { variant, label } = config[status] ?? {
-    variant: "secondary" as const,
+  const { className, label } = config[status] ?? {
+    className: "shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800",
     label: status,
   };
-  return <Badge variant={variant}>{label}</Badge>;
+  return <span className={className}>{label}</span>;
 }

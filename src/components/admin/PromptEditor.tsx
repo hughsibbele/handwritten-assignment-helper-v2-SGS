@@ -1,15 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { useAutoSaveDispatch } from "@/components/auto-save/context";
 import { useAutoSaveForm } from "@/components/auto-save/use-auto-save-form";
 
@@ -79,30 +70,30 @@ export function PromptEditor({ prompt }: { prompt: Prompt }) {
   useAutoSaveForm({ formRef, save, freshnessKey: prompt.updated_at });
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="rounded-md border border-stone-200 bg-white">
+      <div className="px-5 pt-5">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <CardTitle className="font-mono text-base">{prompt.key}</CardTitle>
-            <CardDescription>
+            <div className="text-base font-medium text-ink leading-snug font-mono">{prompt.key}</div>
+            <div className="mt-1 text-sm text-stone-500">
               owner: {prompt.owner} · last saved{" "}
               {new Date(savedAt).toLocaleString()}
-            </CardDescription>
+            </div>
           </div>
-          <Badge variant="outline">v{version}</Badge>
+          <span className="shrink-0 rounded-full border border-stone-300 px-2 py-0.5 text-xs text-stone-500">v{version}</span>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-5">
         <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
-          <Textarea
+          <textarea
             ref={textareaRef}
             name="body"
             defaultValue={prompt.body}
             rows={20}
-            className="font-mono text-xs"
+            className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm leading-snug focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50 font-mono text-xs"
           />
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

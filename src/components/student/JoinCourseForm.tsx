@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -43,18 +41,18 @@ export function JoinCourseForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
-      <Input
+      <input
         type="text"
         placeholder="Enter class code"
         value={joinCode}
         onChange={(e) => setJoinCode(e.target.value)}
-        className="max-w-xs"
+        className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50 max-w-xs"
         disabled={loading}
       />
-      <Button type="submit" disabled={loading || !joinCode.trim()}>
+      <button type="submit" disabled={loading || !joinCode.trim()} className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50">
         {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
         Join
-      </Button>
+      </button>
     </form>
   );
 }

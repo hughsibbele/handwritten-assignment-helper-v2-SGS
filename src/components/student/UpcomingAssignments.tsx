@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { sortByProximity } from "@/lib/assignment-sort";
 
 type AssignmentRow = {
@@ -41,11 +39,11 @@ export function UpcomingAssignments({
     <div className="space-y-3">
       <div className="relative">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cool-gray" />
-        <Input
+        <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search assignments…"
-          className="pl-8"
+          placeholder="Search assignments..."
+          className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50 pl-8"
         />
       </div>
 
@@ -71,14 +69,14 @@ export function UpcomingAssignments({
 
             return (
               <li key={a.id}>
-                <div className="rounded-lg border p-3 transition-colors hover:bg-paper/50">
+                <div className="rounded-lg border p-3 transition-colors hover:bg-stone-50">
                   <Link href={primaryHref} className="block">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-medium">{a.title}</p>
                       {inProgress && (
-                        <Badge variant="outline">In Progress</Badge>
+                        <span className="shrink-0 rounded-full border border-stone-300 px-2 py-0.5 text-xs text-stone-500">In Progress</span>
                       )}
-                      {isDone && <Badge variant="default">Submitted</Badge>}
+                      {isDone && <span className="shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white">Submitted</span>}
                     </div>
                     <div className="mt-1 flex items-center gap-2 text-sm text-cool-gray">
                       <span>{a.course?.name}</span>

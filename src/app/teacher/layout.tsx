@@ -43,7 +43,7 @@ export default async function TeacherLayout({
               href="/teacher/setup"
               className="text-ink transition-colors hover:text-maroon"
             >
-              Canvas &amp; Drive
+              Setup
             </Link>
             {viewerIsAdmin && (
               <Link

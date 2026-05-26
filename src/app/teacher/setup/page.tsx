@@ -1,11 +1,4 @@
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { getServerDbClient } from "@/lib/supabase/server";
 import { createAdminDbClient } from "@/lib/supabase/admin";
 import {
@@ -124,23 +117,23 @@ export default async function TeacherSetupPage() {
             appBaseUrl={appBaseUrl}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Google Drive</CardTitle>
-              <CardDescription>
+          <div className="rounded-md border border-stone-200 bg-white">
+            <div className="px-5 pt-5">
+              <div className="text-base font-medium text-ink leading-snug">Google Drive</div>
+              <div className="mt-1 text-sm text-stone-500">
                 Where transcribed Google Docs are saved. Folder template and
                 sharing scope coming soon.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </div>
+            </div>
+            <div className="px-5">
               <p className="text-sm text-cool-gray">
                 Today, each student&apos;s transcribed work lands in a
                 per-course folder in their own Drive, shared with you.
                 Teacher-side Drive customization (folder template, sharing
                 scope) ships later.
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </>
       )}
     </div>

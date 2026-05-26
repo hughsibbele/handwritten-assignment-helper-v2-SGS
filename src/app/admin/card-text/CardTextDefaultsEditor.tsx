@@ -2,17 +2,6 @@
 
 import { useState, useTransition } from "react";
 import type { HandwrittenCardText } from "@/lib/canvas/install";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { CardPreview } from "@/components/card-text/CardPreview";
 import { updateCardTextDefaults } from "@/lib/card-text/actions";
@@ -75,18 +64,18 @@ export function CardTextDefaultsEditor({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Canvas card text — system defaults</CardTitle>
-        <CardDescription>
+    <div className="rounded-md border border-stone-200 bg-white">
+      <div className="px-5 pt-5">
+        <div className="text-base font-medium text-ink leading-snug">Canvas card text — system defaults</div>
+        <div className="mt-1 text-sm text-stone-500">
           What teachers see as the placeholder fallback per field. Each
           teacher can override any subset on their own{" "}
-          <code className="rounded bg-paper px-1">/teacher/setup</code>{" "}
+          <code className="rounded bg-stone-50 px-1">/teacher/setup</code>{" "}
           page; changes here apply to anyone who hasn&apos;t overridden the
           field. Updated {new Date(initial.updated_at).toLocaleDateString()}.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </div>
+      </div>
+      <div className="px-5">
         <div className="grid gap-6 lg:grid-cols-2">
           <form action={handleSubmit} className="space-y-4">
             <Field
@@ -116,12 +105,12 @@ export function CardTextDefaultsEditor({
               setValue={setFootnote}
             />
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={status === "saving"}>
+              <button type="submit" disabled={status === "saving"} className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50">
                 {status === "saving" && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 Save defaults
-              </Button>
+              </button>
               {status === "saved" && (
                 <span className="text-sm text-green-700">Saved.</span>
               )}
@@ -143,8 +132,8 @@ export function CardTextDefaultsEditor({
             </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -163,23 +152,25 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={`admin-${name}`}>{label}</Label>
+      <label htmlFor={`admin-${name}`} className="text-sm font-medium">{label}</label>
       {multiline ? (
-        <Textarea
+        <textarea
           id={`admin-${name}`}
           name={name}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           required
           rows={4}
+          className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm leading-snug focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
         />
       ) : (
-        <Input
+        <input
           id={`admin-${name}`}
           name={name}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           required
+          className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
         />
       )}
     </div>

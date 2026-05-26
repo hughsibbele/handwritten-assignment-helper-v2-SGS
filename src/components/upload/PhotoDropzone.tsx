@@ -19,7 +19,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Upload, X, Camera, GripVertical, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface Preview {
   id: string;
@@ -149,16 +148,15 @@ export function PhotoDropzone({
         onChange={handleCameraCapture}
         disabled={disabled}
       />
-      <Button
+      <button
         type="button"
-        variant="outline"
-        className="w-full"
+        className="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50 w-full"
         disabled={disabled}
         onClick={() => cameraInputRef.current?.click()}
       >
         <Camera className="mr-2 h-4 w-4" />
         Take Photo
-      </Button>
+      </button>
 
       {/* Sortable preview grid */}
       {previews.length > 0 && (
@@ -192,14 +190,14 @@ export function PhotoDropzone({
             </div>
           )}
 
-          <Button
+          <button
             onClick={handleUpload}
             disabled={disabled}
-            className="w-full"
+            className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50 w-full"
           >
             <ImageIcon className="mr-2 h-4 w-4" />
             Upload {previews.length} page{previews.length !== 1 ? "s" : ""}
-          </Button>
+          </button>
         </>
       )}
     </div>

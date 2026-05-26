@@ -1,11 +1,4 @@
 import { createAdminDbClient } from "@/lib/supabase/admin";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { RetentionPanel } from "@/components/admin/RetentionPanel";
 
 export default async function AdminRetentionPage() {
@@ -29,16 +22,16 @@ export default async function AdminRetentionPage() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Retention</CardTitle>
-          <CardDescription>
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug">Retention</div>
+          <div className="mt-1 text-sm text-stone-500">
             Export submission data to CSV for archival, then hard-delete to
             free up storage at end of year. Delete is irreversible — there&apos;s
             a &ldquo;type DELETE&rdquo; confirm before it runs.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div className="px-5">
           <div className="grid gap-4 text-sm sm:grid-cols-3">
             <div>
               <div className="text-cool-gray">Submissions</div>
@@ -59,8 +52,8 @@ export default async function AdminRetentionPage() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <RetentionPanel />
     </div>

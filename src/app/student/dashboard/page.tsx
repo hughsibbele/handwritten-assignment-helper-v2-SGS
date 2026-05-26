@@ -1,6 +1,4 @@
 import { getServerDbClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookOpen, Clock } from "lucide-react";
 import { UpcomingAssignments } from "@/components/student/UpcomingAssignments";
@@ -22,8 +20,8 @@ export default async function StudentDashboard() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Welcome!</h1>
-        <Card>
-          <CardContent className="space-y-3 py-8">
+        <div className="rounded-md border border-stone-200 bg-white">
+          <div className="px-5 space-y-3 py-8">
             <p className="text-cool-gray">
               We don&apos;t see you on any course roster yet. To get started,
               ask your teacher to:
@@ -46,8 +44,8 @@ export default async function StudentDashboard() {
                 Set up your account
               </Link>
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -145,29 +143,29 @@ export default async function StudentDashboard() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug flex items-center gap-2 text-lg">
             <Clock className="h-5 w-5" />
             Upcoming assignments
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div className="px-5">
           <UpcomingAssignments
             assignments={assignments}
             submissionByAssignment={submissionByAssignment}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+      <div className="rounded-md border border-stone-200 bg-white">
+        <div className="px-5 pt-5">
+          <div className="text-base font-medium text-ink leading-snug flex items-center gap-2 text-lg">
             <BookOpen className="h-5 w-5" />
             Your submissions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </div>
+        </div>
+        <div className="px-5">
           {submissions.length === 0 ? (
             <p className="text-sm text-cool-gray">
               No submissions yet.
@@ -183,7 +181,7 @@ export default async function StudentDashboard() {
                   <li key={s.id}>
                     <Link
                       href={`/student/submissions/${s.id}`}
-                      className="block rounded-lg border p-3 transition-colors hover:bg-paper/50"
+                      className="block rounded-lg border p-3 transition-colors hover:bg-stone-50"
                     >
                       <div className="flex items-center justify-between">
                         <p className="font-medium">
@@ -200,19 +198,19 @@ export default async function StudentDashboard() {
               })}
             </ul>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    draft: "secondary",
-    processing: "outline",
-    review: "default",
-    confirmed: "default",
-    submitted: "default",
+  const variants: Record<string, string> = {
+    draft: "shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800",
+    processing: "shrink-0 rounded-full border border-stone-300 px-2 py-0.5 text-xs text-stone-500",
+    review: "shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white",
+    confirmed: "shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white",
+    submitted: "shrink-0 rounded-full bg-maroon px-2 py-0.5 text-xs font-medium text-white",
   };
 
   const labels: Record<string, string> = {
@@ -224,8 +222,8 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <Badge variant={variants[status] ?? "secondary"}>
+    <span className={variants[status] ?? "shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800"}>
       {labels[status] ?? status}
-    </Badge>
+    </span>
   );
 }

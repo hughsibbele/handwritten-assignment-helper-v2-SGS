@@ -1,7 +1,6 @@
 "use client";
 
 import { HelpCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -15,10 +14,10 @@ export function TeacherGuide() {
     <Dialog>
       <DialogTrigger
         render={
-          <Button variant="outline" size="sm">
+          <button className="inline-flex items-center rounded-md border border-stone-300 px-2.5 py-1 text-xs font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50">
             <HelpCircle className="mr-1 h-4 w-4" />
             Guide
-          </Button>
+          </button>
         }
       />
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
@@ -91,7 +90,7 @@ export function TeacherGuide() {
             </p>
           </section>
 
-          <section className="rounded-md border border-light-blue bg-paper/50 p-3">
+          <section className="rounded-md border border-stone-200 bg-stone-50 p-3">
             <h3 className="mb-1 font-semibold text-ink">
               Tips
             </h3>

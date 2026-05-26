@@ -3,16 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   CheckCircle2,
   CheckSquare,
@@ -114,22 +104,22 @@ export function CoursePickerSection() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pull your courses</CardTitle>
-        <CardDescription>
+    <div className="rounded-md border border-stone-200 bg-white">
+      <div className="px-5 pt-5">
+        <div className="text-base font-medium text-ink leading-snug">Pull your courses</div>
+        <div className="mt-1 text-sm text-stone-500">
           Choose which courses to import from Canvas. You only need to do this
           once — after that, the dashboard keeps things in sync on its own.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </div>
+      </div>
+      <div className="px-5 space-y-4">
         {availableCourses.length === 0 && syncedCourses.length === 0 && (
-          <Button onClick={handleLoadCourses} disabled={loadingCourses}>
+          <button className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50" onClick={handleLoadCourses} disabled={loadingCourses}>
             {loadingCourses && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
             Load courses from Canvas
-          </Button>
+          </button>
         )}
 
         {availableCourses.length > 0 &&
@@ -141,7 +131,7 @@ export function CoursePickerSection() {
                   <button
                     key={c.id}
                     onClick={() => toggleCourse(c.id)}
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-paper/50"
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-stone-50"
                   >
                     {selectedCourseIds.has(c.id) ? (
                       <CheckSquare className="h-4 w-4 shrink-0 text-maroon" />
@@ -157,12 +147,13 @@ export function CoursePickerSection() {
                   </button>
                 ))}
               </div>
-              <Button
+              <button
+                className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50"
                 onClick={() => setShowNaming(true)}
                 disabled={selectedCourseIds.size === 0}
               >
                 Next: Name courses
-              </Button>
+              </button>
             </>
           )}
 
@@ -178,10 +169,11 @@ export function CoursePickerSection() {
                 .filter((c) => selectedCourseIds.has(c.id))
                 .map((c) => (
                   <div key={c.id} className="space-y-1">
-                    <Label className="text-xs text-cool-gray">
+                    <label className="text-xs font-medium text-cool-gray">
                       {c.name}
-                    </Label>
-                    <Input
+                    </label>
+                    <input
+                      className="w-full rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-maroon focus:outline-none focus:ring-1 focus:ring-maroon disabled:opacity-50"
                       placeholder="Short name, e.g. FLC"
                       value={courseShortNames[c.id] ?? ""}
                       onChange={(e) =>
@@ -195,14 +187,14 @@ export function CoursePickerSection() {
                 ))}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowNaming(false)}>
+              <button className="rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50" onClick={() => setShowNaming(false)}>
                 Back
-              </Button>
-              <Button onClick={handleSyncSelected} disabled={syncing}>
+              </button>
+              <button className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50" onClick={handleSyncSelected} disabled={syncing}>
                 {syncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Sync {selectedCourseIds.size} course
                 {selectedCourseIds.size !== 1 ? "s" : ""}
-              </Button>
+              </button>
             </div>
           </>
         )}
@@ -221,15 +213,15 @@ export function CoursePickerSection() {
                 </li>
               ))}
             </ul>
-            <Button
-              className="mt-4"
+            <button
+              className="rounded-md bg-maroon px-3 py-1.5 text-sm font-medium text-white hover:bg-maroon-dark disabled:opacity-50 mt-4"
               onClick={() => router.push("/teacher/dashboard")}
             >
               Go to dashboard
-            </Button>
+            </button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

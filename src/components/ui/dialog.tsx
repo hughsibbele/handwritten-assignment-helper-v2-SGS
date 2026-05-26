@@ -76,7 +76,7 @@ function DialogContent({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 z-50 m-auto w-full max-w-[calc(100%-2rem)] rounded-xl bg-white p-0 text-sm text-ink ring-1 ring-ink/10 backdrop:bg-black/10 backdrop:backdrop-blur-sm sm:max-w-sm"
+      className="fixed inset-0 z-50 m-auto w-full max-w-[calc(100%-2rem)] rounded-md border border-stone-200 bg-white p-0 text-sm text-ink backdrop:bg-black/10 backdrop:backdrop-blur-sm sm:max-w-sm"
     >
       <div className={cn("relative grid gap-4 p-4", className)} {...props}>
         {children}
@@ -84,7 +84,7 @@ function DialogContent({
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-md text-cool-gray transition-colors hover:bg-paper hover:text-ink"
+            className="absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-md text-cool-gray transition-colors hover:bg-stone-50 hover:text-ink"
           >
             <XIcon className="size-4" />
             <span className="sr-only">Close</span>
@@ -105,7 +105,7 @@ function DialogFooter({ className, children, ...props }: React.ComponentProps<"d
   return (
     <div
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-paper/50 p-4 sm:flex-row sm:justify-end",
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-md border-t border-stone-100 bg-stone-50 p-4 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}
