@@ -34,12 +34,6 @@ export default async function TeacherLayout({
         right={
           <nav className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">
             <Link
-              href="/teacher/dashboard"
-              className="text-ink transition-colors hover:text-maroon"
-            >
-              Dashboard
-            </Link>
-            <Link
               href="/teacher/setup"
               className="text-ink transition-colors hover:text-maroon"
             >
