@@ -1,9 +1,8 @@
-"use client";
-
 /* eslint-disable @next/next/no-img-element */
 
-import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerDbClient } from "@/lib/supabase/server";
 
 function GoogleMark() {
   return (
@@ -34,27 +33,30 @@ function GoogleMark() {
   );
 }
 
-export default function LoginPage() {
-  const supabase = createClient();
-  const searchParams = useSearchParams();
-  const rawNext = searchParams.get("next");
-  const next = rawNext && rawNext.startsWith("/") ? rawNext : "/";
+const ERROR_MESSAGES: Record<string, string> = {
+  domain_not_allowed:
+    "Sign-in is restricted to @episcopalhighschool.org Google accounts.",
+  auth: "Sign-in didn't complete. Please try again.",
+  oauth_init_failed:
+    "Couldn't start the Google sign-in. Please try again in a moment.",
+};
 
-  async function handleGoogleLogin() {
-    const callback = new URL("/api/auth/callback", window.location.origin);
-    if (next !== "/") callback.searchParams.set("next", next);
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callback.toString(),
-        scopes:
-          "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents",
-        queryParams: {
-          access_type: "offline",
-        },
-      },
-    });
-  }
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; next?: string }>;
+}) {
+  const supabase = await getServerDbClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) redirect("/");
+
+  const { error, next } = await searchParams;
+  const errorMessage =
+    error && (ERROR_MESSAGES[error] ?? `Sign-in failed: ${error}`);
+
+  const loginHref = next
+    ? `/auth/login?next=${encodeURIComponent(next)}`
+    : "/auth/login";
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-paper p-4">
@@ -71,14 +73,23 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {errorMessage && (
+          <div
+            role="alert"
+            className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
+          >
+            {errorMessage}
+          </div>
+        )}
+
         <div className="space-y-3">
-          <button
-            onClick={handleGoogleLogin}
+          <Link
+            href={loginHref}
             className="inline-flex w-full items-center justify-center gap-2.5 rounded-sm bg-maroon px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-maroon-dark"
           >
             <GoogleMark />
             Sign in with EHS Google
-          </button>
+          </Link>
           <p className="text-center text-xs italic text-cool-gray">
             EHS Workspace accounts only.
           </p>

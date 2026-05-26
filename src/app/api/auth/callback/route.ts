@@ -173,13 +173,25 @@ export async function GET(request: Request) {
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
 
+      let redirectUrl: string;
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
+        redirectUrl = `${origin}${next}`;
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+        redirectUrl = `https://${forwardedHost}${next}`;
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        redirectUrl = `${origin}${next}`;
       }
+      const response = NextResponse.redirect(redirectUrl);
+      if (providerRefreshToken) {
+        response.cookies.set("_grt", "1", {
+          httpOnly: true,
+          secure: !isLocalEnv,
+          sameSite: "lax",
+          maxAge: 365 * 24 * 60 * 60,
+          path: "/",
+        });
+      }
+      return response;
     }
   }
 
