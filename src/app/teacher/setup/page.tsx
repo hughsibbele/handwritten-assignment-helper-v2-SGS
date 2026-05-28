@@ -21,7 +21,7 @@ import { CoursePickerSection } from "./CoursePickerSection";
  *   - Teacher row + no courses synced: Canvas connection (with green
  *     checkmark) + course picker wizard.
  *   - Teacher row + courses synced: Canvas connection + card-text
- *     editor + Drive placeholder. Course picker hides; courses re-sync
+ *     editor + Drive info card. Course picker hides; courses re-sync
  *     happens from the dashboard.
  */
 export default async function TeacherSetupPage() {
@@ -76,9 +76,8 @@ export default async function TeacherSetupPage() {
         <h1 className="text-2xl font-bold">Canvas &amp; Drive setup</h1>
         {teacherId ? (
           <p className="text-sm text-cool-gray">
-            Connect your Canvas account, customize the card students see in
-            Canvas, and (soon) configure Google Drive. Your day-to-day work
-            lives on the{" "}
+            Connect your Canvas account and customize the card students see in
+            Canvas. Your day-to-day work lives on the{" "}
             <a
               href="/teacher/dashboard"
               className="underline underline-offset-2"
@@ -107,7 +106,7 @@ export default async function TeacherSetupPage() {
           subsequent renders skip this section (hasCourses=true). */}
       {teacherId && isConfigured && !hasCourses && <CoursePickerSection />}
 
-      {/* Card-text editor + Drive placeholder require a teacher row;
+      {/* Card-text editor + Drive info require a teacher row;
           hidden during the first-time-connect state. */}
       {teacherId && (
         <>
@@ -121,16 +120,13 @@ export default async function TeacherSetupPage() {
             <div className="px-5 pt-5">
               <div className="text-base font-medium text-ink leading-snug">Google Drive</div>
               <div className="mt-1 text-sm text-stone-500">
-                Where transcribed Google Docs are saved. Folder template and
-                sharing scope coming soon.
+                Where transcribed Google Docs are saved.
               </div>
             </div>
-            <div className="px-5">
+            <div className="px-5 pb-5">
               <p className="text-sm text-cool-gray">
-                Today, each student&apos;s transcribed work lands in a
-                per-course folder in their own Drive, shared with you.
-                Teacher-side Drive customization (folder template, sharing
-                scope) ships later.
+                Each student&apos;s transcribed work lands in a per-course
+                folder in their own Drive, shared with you.
               </p>
             </div>
           </div>
